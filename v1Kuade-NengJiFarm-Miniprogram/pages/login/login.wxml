@@ -1,0 +1,43 @@
+<view class="container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;"></view>
+
+  <!-- 背景层 -->
+  <view class="bg-layer">
+    <!-- 主背景图 -->
+    <image 
+      class="bg-image" 
+      src="{{bgImage}}" 
+      mode="aspectFill" 
+      lazy-load
+      bindload="onBgImageLoad"
+      binderror="onBgImageError"
+    />
+    <!-- 全局柔和遮罩 -->
+    <view class="bg-mask"></view>
+    <!-- 品牌区域增强遮罩 -->
+    <view class="bg-brand-mask"></view>
+    <!-- 底部卡片区域遮罩 -->
+    <view class="bg-card-mask"></view>
+  </view>
+
+  <view class="brand-area">
+    <text class="brand-name">稻田时光农场</text>
+    <text class="brand-slogan">回归自然 · 享受生活</text>
+  </view>
+
+  <view class="login-card">
+    <button
+      class="phone-login-btn {{isLogging ? 'phone-login-disabled' : ''}}"
+      open-type="getPhoneNumber"
+      bind:getphonenumber="onGetPhoneNumber"
+      loading="{{isLogging}}">
+      <text class="login-btn-text">{{isLogging ? '登录中...' : '一键登录'}}</text>
+    </button>
+    <view class="security-hint" wx:if="{{!isLogging}}">
+      <text class="hint-text">微信安全认证 · 信息加密保护</text>
+      
+    </view>
+
+    <view class="login-mask" wx:if="{{isLogging}}" catchtap="preventLoginClick"></view>
+  </view>
+</view>

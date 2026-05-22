@@ -1,0 +1,366 @@
+<view class="container">
+
+  <!-- 返回按钮 -->
+  <view class="nav-back" bindtap="goBack">
+    <text class="back-icon">‹</text>
+  </view>
+
+  <!-- 订单状态 Banner -->
+  <view class="status-banner">
+    <view class="status-banner-inner">
+      <view class="status-info">
+        <view class="status-main-text">
+          {{order.statusText || (order.status === 'pending' ? '待支付' : order.status === 'cancelled' ? '已取消' : '')}}
+        </view>
+        <view wx:if="{{order.status === 'pending' && countdownText}}" class="status-sub-text">
+          请在 <text class="countdown-inline">{{countdownText}}</text> 内完成支付
+        </view>
+        <view wx:elif="{{order.status === 'shipping'}}" class="status-sub-text">商品正在配送中，请耐心等候</view>
+        <view wx:elif="{{order.status === 'completed'}}" class="status-sub-text">感谢您的购买，期待再次光临</view>
+        <view wx:elif="{{order.status === 'cancelled'}}" class="status-sub-text">
+          <text>订单已取消</text>
+        </view>
+        <view wx:elif="{{order.status === 'paid'}}" class="status-sub-text">支付成功，等待商家处理</view>
+        <view wx:elif="{{order.status === 'ordered'}}" class="status-sub-text">已支付，等待厨房制作</view>
+        <view wx:elif="{{order.status === 'verify_pending'}}" class="status-sub-text">已支付，请到场核销</view>
+        <view wx:elif="{{order.status === 'verified' || order.verified}}" class="status-sub-text">已核销，感谢参与</view>
+        <view wx:elif="{{order.status === 'refunding'}}" class="status-sub-text">退款申请处理中，请耐心等待</view>
+        <view wx:elif="{{order.status === 'refunded'}}" class="status-sub-text">退款已完成，款项将原路退回</view>
+      </view>
+    </view>
+
+    <!-- 核销二维码（活动/自取订单） -->
+    <view wx:if="{{(order.isActivityOrder || order.isPickupOrder) && order.status !== 'pending' && order.status !== 'cancelled' && order.status !== 'verified' && order.status !== 'completed'}}" class="qrcode-area">
+      <view class="qrcode-divider"></view>
+      <view class="qrcode-title">{{order.isPickupOrder ? '自取核销二维码' : '活动核销二维码'}}</view>
+      <image class="qrcode-img" src="{{order.qrcode}}" mode="aspectFit" />
+      <view class="qrcode-tip">出示给工作人员扫描核销</view>
+      <view class="qrcode-btn" bindtap="saveQrcode">保存二维码</view>
+    </view>
+
+    <!-- 自取订单提示卡片 -->
+    <view wx:if="{{order.isPickupOrder && order.status === 'verify_pending'}}" class="card pickup-tip-card">
+      <view class="card-title">
+        <view class="card-title-left">
+          <view class="card-title-bar"></view>
+          <text class="card-title-text">到店自取</text>
+        </view>
+      </view>
+      <view class="card-body pickup-tip-body">
+        <text class="pickup-tip-text">请到店后出示核销二维码，由店员扫码核销后即可取走商品</text>
+      </view>
+    </view>
+
+    <!-- 活动有效期信息 -->
+    <view wx:if="{{order.isActivityOrder && order.validity && order.status !== 'verified'}}" class="card validity-card">
+      <view class="card-title">
+        <view class="card-title-left">
+          <view class="card-title-bar"></view>
+          <text class="card-title-text">核销有效期</text>
+        </view>
+        <view class="validity-status {{order.validity.expired ? 'expired' : order.validity.isValid ? 'valid' : 'pending'}}">
+          {{order.validity.expired ? '已过期' : order.validity.isValid ? '有效' : '未开始'}}
+        </view>
+      </view>
+      <view class="card-body validity-body">
+        <view class="validity-row">
+          <text class="validity-label">有效期限</text>
+          <text class="validity-value">{{order.duration || 30}}天（从购买起算）</text>
+        </view>
+        <view class="validity-row">
+          <text class="validity-label">开始时间</text>
+          <text class="validity-value">{{order.validity.startTime}}</text>
+        </view>
+        <view class="validity-row">
+          <text class="validity-label">结束时间</text>
+          <text class="validity-value">{{order.validity.endTime}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 退款进度卡片 -->
+  <view wx:if="{{order.status === 'refunding' || order.status === 'refunded' || (order.hasRefund && order.refundInfo)}}" class="card refund-card">
+    <view class="card-title">
+      <view class="card-title-left">
+        <view class="card-title-bar"></view>
+        <text class="card-title-text">退款进度</text>
+      </view>
+    </view>
+    <view class="card-body refund-body">
+      <view class="refund-row">
+        <text class="refund-label">退款金额</text>
+        <text class="refund-value refund-amount">¥{{order.refundInfo.refundAmount || order.totalPrice}}</text>
+      </view>
+      <view class="refund-row">
+        <text class="refund-label">退款原因</text>
+        <text class="refund-value">{{order.refundInfo.reasonText || order.refundInfo.reason}}</text>
+      </view>
+      <view class="refund-row">
+        <text class="refund-label">申请时间</text>
+        <text class="refund-value">{{order.refundInfo.createTime}}</text>
+      </view>
+      <view class="refund-row">
+        <text class="refund-label">当前状态</text>
+        <text class="refund-value refund-status {{order.refundInfo.statusClass || order.refundInfo.status}}">
+          {{order.refundInfo.statusText}}
+        </text>
+      </view>
+      <view wx:if="{{order.refundInfo.adminReply}}" class="refund-row refund-admin-reply">
+        <text class="refund-label">商家回复</text>
+        <text class="refund-value">{{order.refundInfo.adminReply}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 物流信息 -->
+  <view wx:if="{{!order.isActivityOrder && !order.isCancelledOrder && !order.isFoodOrder && order.status === 'shipping' && (order.logisticsCompany || order.trackingNumber)}}" class="card clickable-card" bindtap="goToLogisticsDetail">
+    <view class="card-title">
+      <view class="card-title-left">
+        <view class="card-title-bar"></view>
+        <text class="card-title-text">物流信息</text>
+      </view>
+      <text class="card-title-arrow">查看详情 ›</text>
+    </view>
+    <view class="card-body logistics-card-body">
+      <view class="logistics-basic">
+        <view class="logistics-basic-icon">📦</view>
+        <view class="logistics-basic-info">
+          <text class="logistics-basic-company">{{order.logisticsCompany || '快递公司'}}</text>
+          <text class="logistics-basic-no">运单号：{{order.trackingNumber || '-'}}</text>
+          <text wx:if="{{order.estimatedArrival}}" class="logistics-estimated">预计送达：{{order.estimatedArrival}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading">
+    <view class="loading-ring"></view>
+    <text class="loading-txt">加载中...</text>
+  </view>
+
+  <!-- 订单详情 -->
+  <view wx:else class="order-detail">
+
+    <!-- 收货地址（自取订单不显示地址） -->
+    <view wx:if="{{order.isGoodsOrder && !order.isPickupOrder && !order.isCancelledOrder}}" class="card">
+      <view class="card-title">
+        <view class="card-title-left">
+          <view class="card-title-bar"></view>
+          <text class="card-title-text">收货地址</text>
+        </view>
+      </view>
+      <view class="card-body addr-body">
+        <view class="addr-icon-wrap">
+          <text class="addr-icon">📍</text>
+        </view>
+        <view class="addr-content">
+          <view class="addr-row">
+            <text class="addr-name">{{order.shippingAddress.name}}</text>
+            <text class="addr-phone">{{order.shippingAddress.phone}}</text>
+          </view>
+          <view class="addr-detail">{{order.shippingAddress.address}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 用餐信息（点餐订单） -->
+    <view wx:if="{{order.isFoodOrder && !order.isCancelledOrder}}" class="card">
+      <view class="card-title">
+        <view class="card-title-left">
+          <view class="card-title-bar"></view>
+          <text class="card-title-text">用餐信息</text>
+        </view>
+      </view>
+      <view class="card-body addr-body">
+        <view class="addr-icon-wrap">
+          <text class="addr-icon">🍽️</text>
+        </view>
+        <view class="addr-content">
+          <view class="addr-row">
+            <text class="addr-name">桌号</text>
+            <text class="addr-phone">{{order.diningTableNo || '-'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 订单备注（点餐订单） -->
+    <view wx:if="{{order.isFoodOrder && order.remark}}" class="card">
+      <view class="card-title">
+        <view class="card-title-left">
+          <view class="card-title-bar"></view>
+          <text class="card-title-text">订单备注</text>
+        </view>
+      </view>
+      <view class="card-body remark-body">
+        <text class="remark-text">{{order.remark}}</text>
+      </view>
+    </view>
+
+    <!-- 商品信息 -->
+    <view class="card">
+      <view class="card-title">
+        <view class="card-title-left">
+          <view class="card-title-bar"></view>
+          <text class="card-title-text">商品信息</text>
+        </view>
+        <text class="card-title-sub">共 {{order.items.length}} 件</text>
+      </view>
+      <view class="card-body goods-body">
+        <view class="goods-item" wx:for="{{order.items}}" wx:key="id">
+          <image class="goods-img" src="{{item.image}}" mode="aspectFill" />
+          <view class="goods-mid">
+            <view class="goods-name">{{item.name}}</view>
+            <view class="goods-qty-row">
+              <text wx:if="{{!item.isFarmGood}}" class="goods-rule">规格：默认</text>
+              <text class="goods-qty">× {{item.quantity}}</text>
+            </view>
+          </view>
+          <view class="goods-right">
+            <view class="goods-price">￥{{item.price}}</view>
+            <view class="goods-subtotal">小计 ￥{{item.subtotal}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 价格明细 -->
+    <view class="card">
+      <view class="card-title">
+        <view class="card-title-left">
+          <view class="card-title-bar"></view>
+          <text class="card-title-text">价格明细</text>
+        </view>
+      </view>
+      <view class="card-body rows">
+        <view class="row" wx:for="{{order.items}}" wx:key="id">
+          <text class="row-lbl">{{item.name}}</text>
+          <text class="row-val">￥{{item.subtotal}}</text>
+        </view>
+        <view class="row row-total">
+          <text class="row-total-lbl">实付金额</text>
+          <view class="row-total-right">
+            <text class="row-total-unit">¥</text>
+            <text class="row-total-val">{{order.totalPrice}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 订单信息 -->
+    <view class="card">
+      <view class="card-title">
+        <view class="card-title-left">
+          <view class="card-title-bar"></view>
+          <text class="card-title-text">订单信息</text>
+        </view>
+      </view>
+      <view class="card-body rows">
+        <!-- 订单编号（所有订单类型都显示） -->
+        <view class="row">
+          <text class="row-lbl">订单编号</text>
+          <text class="row-val row-val-sm">{{order.orderNumber || order.id}}</text>
+        </view>
+
+        <!-- 已取消订单：只显示订单编号和取消时间 -->
+        <block wx:if="{{order.isCancelledOrder}}">
+          <view class="row" wx:if="{{order.cancelTime}}">
+            <text class="row-lbl">取消时间</text>
+            <text class="row-val">{{order.cancelTime}}</text>
+          </view>
+        </block>
+
+        <!-- 待支付订单：只显示订单编号和下单时间 -->
+        <block wx:elif="{{order.status === 'pending'}}">
+          <view class="row" wx:if="{{order.createTime}}">
+            <text class="row-lbl">下单时间</text>
+            <text class="row-val">{{order.createTime}}</text>
+          </view>
+        </block>
+
+        <!-- 已核销订单（活动）：显示核销时间 -->
+        <block wx:elif="{{order.status === 'verified'}}">
+          <view class="row" wx:if="{{order.createTime}}">
+            <text class="row-lbl">下单时间</text>
+            <text class="row-val">{{order.createTime}}</text>
+          </view>
+          <view class="row" wx:if="{{order.paymentTime}}">
+            <text class="row-lbl">支付时间</text>
+            <text class="row-val">{{order.paymentTime}}</text>
+          </view>
+          <view class="row" wx:if="{{order.verifyTime || order.verifiedTime}}">
+            <text class="row-lbl">核销时间</text>
+            <text class="row-val">{{order.verifyTime || order.verifiedTime}}</text>
+          </view>
+        </block>
+
+        <!-- 已完成订单：显示完整信息包括交易流水号 -->
+        <block wx:elif="{{order.status === 'completed'}}">
+          <view class="row" wx:if="{{order.createTime}}">
+            <text class="row-lbl">下单时间</text>
+            <text class="row-val">{{order.createTime}}</text>
+          </view>
+          <view class="row" wx:if="{{order.paymentTime}}">
+            <text class="row-lbl">支付时间</text>
+            <text class="row-val">{{order.paymentTime}}</text>
+          </view>
+          <view class="row" wx:if="{{order.completeTime}}">
+            <text class="row-lbl">完成时间</text>
+            <text class="row-val">{{order.completeTime}}</text>
+          </view>
+          <view class="row" wx:if="{{order.paymentMethod}}">
+            <text class="row-lbl">支付方式</text>
+            <text class="row-val">{{order.paymentMethod}}</text>
+          </view>
+          <view class="row" wx:if="{{order.transactionId}}">
+            <text class="row-lbl">交易流水号</text>
+            <text class="row-val row-val-sm">{{order.transactionId}}</text>
+          </view>
+        </block>
+
+        <!-- 其他状态（支付中、配送中等）：显示基本信息 -->
+        <block wx:else>
+          <view class="row" wx:if="{{order.createTime}}">
+            <text class="row-lbl">下单时间</text>
+            <text class="row-val">{{order.createTime}}</text>
+          </view>
+          <view class="row" wx:if="{{order.paymentTime}}">
+            <text class="row-lbl">支付时间</text>
+            <text class="row-val">{{order.paymentTime}}</text>
+          </view>
+          <view class="row" wx:if="{{order.shippingTime && !order.isActivityOrder && !order.isPickupOrder}}">
+            <text class="row-lbl">发货时间</text>
+            <text class="row-val">{{order.shippingTime}}</text>
+          </view>
+          <view class="row" wx:if="{{order.paymentMethod}}">
+            <text class="row-lbl">支付方式</text>
+            <text class="row-val">{{order.paymentMethod}}</text>
+          </view>
+          <view class="row" wx:if="{{order.transactionId}}">
+            <text class="row-lbl">交易流水号</text>
+            <text class="row-val row-val-sm">{{order.transactionId}}</text>
+          </view>
+        </block>
+
+      </view>
+    </view>
+
+  </view>
+
+  <!-- 底部操作栏（固定） -->
+  <view class="bottom-bar">
+    <!-- 无退款申请，且订单可申请退款 -->
+    <button wx:if="{{!order.hasRefund && (order.status === 'paid' || order.status === 'shipping' || order.status === 'ordered' || order.status === 'verify_pending')}}" class="btn btn-ghost" bindtap="applyRefund">申请退款</button>
+    <button wx:if="{{!order.isActivityOrder && !order.isFoodOrder && order.status === 'shipping'}}" class="btn btn-ghost" bindtap="confirmReceipt">确认收货</button>
+    <button wx:if="{{order.status === 'pending' || order.status === 'pending_payment'}}" class="btn btn-danger" bindtap="cancelOrder">取消订单</button>
+    <button wx:if="{{order.status === 'pending' || order.status === 'pending_payment'}}" class="btn btn-primary" bindtap="payOrder">去支付</button>
+  </view>
+
+  <!-- 客服悬浮按钮 -->
+  <button class="service-button function-item function-item-btn" open-type="contact">
+    <image class="service-icon" src="https://img.icons8.com/ios-glyphs/24/666666/headset.png" />
+  </button>
+
+</view>

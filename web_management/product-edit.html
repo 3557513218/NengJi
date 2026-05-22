@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>农场管理后台 - 产品管理 - 编辑页面</title>
+		<script src="js/v3.2.8/vue.global.prod.js" type="text/javascript" charset="utf-8"></script>	<script src="js/api.js"></script>
+
+	<script src="js/auth.js"></script>
+
+		<link rel="stylesheet" href="css/admin-base.css" />
+	<link rel="stylesheet" href="css/admin-components.css" />
+	<link rel="stylesheet" href="css/admin-form.css" />
+	<script src="js/admin-utils.js"></script>
+	</head>
+	
+	<style>
+		.content{
+			flex: 1;
+			padding: 20px;
+			background-color: #f5f5f5;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		.top-nav{
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 20px;
+			padding-bottom: 10px;
+			border-bottom: 1px solid #e0e0e0;
+			flex-shrink: 0;
+		}
+
+		.form-scroll{
+			flex: 1;
+			min-height: 0;
+			overflow-y: auto;
+			padding-right: 4px;
+		}
+		.form-container{
+			background: white;
+			padding: 20px;
+			border-radius: 8px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		.form-row{
+			display: flex;
+			margin-bottom: 20px;
+		}
+		.form-group{
+			flex: 1;
+			margin-right: 20px;
+		}
+		
+		.form-group:last-child{
+			margin-right: 0;
+		}
+		
+		.form-group label{
+			display: block;
+			margin-bottom: 5px;
+			font-weight: 500;
+		}
+		
+		.form-group input,
+		.form-group select,
+		.form-group textarea{
+			width: 100%;
+			padding: 8px;
+			border: 1px solid #e2e8f0;
+			border-radius: 4px;
+			font-size: 14px;
+		}
+		
+		.form-group textarea{
+			height: 100px;
+			resize: vertical;
+		}
+
+		.weight-input-group{
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.weight-input-group input{
+			flex: 1;
+			min-width: 0;
+			font-size: 15px;
+		}
+
+		.weight-input-group select{
+			width: 110px;
+			flex: 0 0 110px;
+			font-size: 15px;
+			font-weight: 500;
+		}
+		.image-upload{
+			display: flex;
+			flex-wrap: wrap;
+			margin-top: 10px;
+		}
+		
+		.image-item{
+			position: relative;
+			margin-right: 10px;
+			margin-bottom: 10px;
+			overflow: visible;
+			width: 80px;
+			height: 80px;
+		}
+		
+		.image-item img{
+			width: 80px;
+			height: 80px;
+			object-fit: cover;
+			border: 1px solid #e2e8f0;
+			border-radius: 4px;
+		}
+		
+		.add-image-btn{
+			width: 80px;
+			height: 80px;
+			border: 1px dashed #e2e8f0;
+			border-radius: 4px;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			cursor: pointer;
+			color: #a0aec0;
+			transition: all 0.3s ease;
+		}
+		
+		.add-image-btn:hover{
+			border-color: #3182ce;
+			color: #3182ce;
+			background: #f7fafc;
+		}
+		
+		.add-icon{
+			font-size: 24px;
+			line-height: 1;
+		}
+		
+		.add-text{
+			font-size: 10px;
+			margin-top: 4px;
+		}
+		
+		.remove-image-btn{
+			position: absolute;
+			top: 2px;
+			right: 2px;
+			width: 20px;
+			height: 20px;
+			background: #718096;
+			color: white;
+			border-radius: 50%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			cursor: pointer;
+			font-size: 14px;
+			line-height: 1;
+			transition: all 0.3s ease;
+		}
+		
+		.remove-image-btn:hover{
+			background: #4a5568;
+			transform: scale(1.1);
+		}
+		
+		.video-thumb{
+			position: relative;
+			width: 80px;
+			height: 80px;
+		}
+		
+		.video-thumb img{
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			border: 1px solid #e2e8f0;
+			border-radius: 4px;
+		}
+		
+		.video-play-icon{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 24px;
+			height: 24px;
+			background: rgba(0,0,0,0.6);
+			border-radius: 50%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			color: white;
+			font-size: 12px;
+			line-height: 1;
+		}
+		
+		.media-wrapper{
+			width: 80px;
+			height: 80px;
+			background: #1a1a1a;
+			border: 1px solid #e2e8f0;
+			border-radius: 4px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			overflow: hidden;
+		}
+		
+		.media-wrapper img{
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		.form-actions{
+			margin-top: 30px;
+			display: flex;
+			justify-content: flex-start;
+		}
+		
+		.btn{
+				padding: 8px 16px;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				margin-right: 10px;
+				font-size: 14px;
+				transition: all 0.3s ease;
+			}
+			
+			.btn:hover{
+				transform: translateY(-1px);
+				box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+			}
+			
+			.btn:active{
+				transform: translateY(0);
+				box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+			}
+			
+			.btn-success:hover{
+				background: #2f855a;
+			}
+			
+			.btn-default:hover{
+				background: #cbd5e0;
+			}
+
+			.image-preview-overlay{
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: rgba(0,0,0,0.8);
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				z-index: 1000;
+				cursor: zoom-out;
+			}
+
+			.image-preview-content{
+				max-width: 90%;
+				max-height: 90%;
+				object-fit: contain;
+				border-radius: 8px;
+				box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+			}
+
+			.image-preview-close{
+				position: absolute;
+				top: 20px;
+				right: 20px;
+				width: 40px;
+				height: 40px;
+				background: rgba(255,255,255,0.2);
+				border: 1px solid rgba(255,255,255,0.3);
+				border-radius: 50%;
+				color: white;
+				font-size: 24px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				cursor: pointer;
+				transition: all 0.3s ease;
+			}
+
+			.image-preview-close:hover{
+				background: rgba(255,255,255,0.3);
+			}
+
+			.image-item img,
+			.media-wrapper img{
+				cursor: zoom-in;
+			}
+
+			.video-preview-overlay{
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: rgba(0,0,0,0.8);
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				z-index: 1000;
+			}
+
+			.video-preview-content{
+				max-width: 90%;
+				max-height: 90%;
+				border-radius: 8px;
+				box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+			}
+
+			.video-preview-close{
+				position: absolute;
+				top: 20px;
+				right: 20px;
+				width: 40px;
+				height: 40px;
+				background: rgba(255,255,255,0.2);
+				border: 1px solid rgba(255,255,255,0.3);
+				border-radius: 50%;
+				color: white;
+				font-size: 24px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				cursor: pointer;
+				transition: all 0.3s ease;
+			}
+
+			.video-preview-close:hover{
+				background: rgba(255,255,255,0.3);
+			}
+
+			.video-thumb{
+				cursor: zoom-in;
+			}
+	</style>
+	
+	<body>
+		<div id="app">
+			<div class="main-container">
+				<!-- 侧边栏 -->
+				<aside class="sidebar">
+					<div class="sidebar-header">农场管理后台</div>
+					<ul class="sidebar-menu">
+									<li class="active" @click="navigateTo('product.html')">产品管理</li>
+									<li @click="navigateTo('order.html')">订单管理</li>
+									<li @click="navigateTo('dish.html')">菜品管理</li>
+									<li @click="navigateTo('coupon.html')">活动券管理</li>
+									<li @click="navigateTo('user.html')">用户管理</li>
+								</ul>
+				</aside>
+				
+				<!-- 主内容区 -->
+				<main class="content">
+					<!-- 顶部导航 -->
+					<header class="top-nav">
+						<div>农场管理后台-产品管理-编辑页面</div>
+						<div class="user-info">
+						<div class="user-avatar">用</div>
+						<div class="user-info-row">
+							<div>用户12312</div>
+							<button class="btn-logout" @click="logout">退出登录</button>
+						</div>
+					</div>
+					</header>
+					
+					<!-- 产品编辑页面 -->
+					<div class="form-scroll">
+						<div class="form-container">
+							<div v-if="loadError" style="margin-bottom: 16px; color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px; padding: 8px 10px;">
+								{{ loadError }}
+							</div>
+							<div class="form-row" style="display: none;">
+								<div class="form-group">
+									<label>产品ID</label>
+									<input type="text" v-model="productForm.id" readonly />
+								</div>
+							</div>
+							<div class="form-row">
+								<div class="form-group">
+									<label>产品名称</label>
+									<input type="text" v-model="productForm.name" />
+								</div>
+								<div class="form-group">
+									<label>价格</label>
+									<input type="number" v-model="productForm.price" />
+								</div>
+								<div class="form-group">
+									<label>库存数量</label>
+									<input type="number" v-model="productForm.stock" />
+								</div>
+								<div class="form-group">
+									<label>产品类型</label>
+									<select v-model="productForm.productType">
+										<option value="">请选择产品类型</option>
+										<option v-for="cat in categories" :key="cat.id" :value="cat.categoryName">
+											{{ cat.categoryName }}
+										</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-row">
+								<div class="form-group">
+									<label>状态</label>
+									<select v-model="productForm.status">
+										<option value="">请选择状态</option>
+										<option v-for="status in statuses" :key="status.commodityStatusId" :value="status.statusName">
+											{{ status.statusName }}
+										</option>
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-row">
+								<div class="form-group">
+									<label>产品封面</label>
+									<div class="image-upload">
+										<input type="file" ref="coverFileInput" class="file-input" accept="image/*" @change="handleCoverImageUpload" style="display: none;" />
+										<div class="image-item" v-if="productForm.coverImage || coverImagePreview">
+											<img :src="coverImagePreview || productForm.coverImage" alt="产品封面" @click="openImagePreview(coverImagePreview || productForm.coverImage)" />
+											<div class="remove-image-btn" @click="removeCoverImage">×</div>
+										</div>
+										<div class="add-image-btn" @click="selectCoverImage">
+											<span class="add-icon">+</span>
+											<span class="add-text">添加封面</span>
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label>轮播图/视频(最多添加5张)</label>
+									<div class="image-upload">
+										<input type="file" ref="carouselFileInput" class="file-input" accept="image/*,video/*" @change="handleCarouselFileUpload" style="display: none;" />
+										<div class="image-item" v-for="(item, index) in productForm.carouselMedia" :key="index">
+											<div v-if="item.type === 'image'" class="media-wrapper">
+												<img :src="item.previewUrl || item.url" alt="轮播图" @error="handleMediaLoadError($event)" @click="openImagePreview(item.previewUrl || item.url)" />
+											</div>
+											<div v-else class="video-thumb" @click="openVideoPreview(item)">
+												<div class="media-wrapper">
+													<img :src="item.previewThumb || item.thumb || item.url" alt="视频封面" @error="handleMediaLoadError($event)" />
+												</div>
+												<span class="video-play-icon">▶</span>
+											</div>
+											<div class="remove-image-btn" @click="removeCarouselMedia(index)">×</div>
+										</div>
+										<div class="add-image-btn" @click="selectCarouselMedia" v-if="productForm.carouselMedia.length < 5">
+											<span class="add-icon">+</span>
+											<span class="add-text">添加图片/视频</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-row">
+								<div class="form-group">
+									<label>净含量</label>
+									<div class="weight-input-group">
+										<input type="number" v-model="productForm.netWeight" />
+										<select v-model="productForm.unitId" @change="syncWeightUnitFromUnitId" :disabled="unitsLoading || units.length === 0">
+											<option value="" disabled>{{ unitsLoading ? '单位加载中...' : (units.length ? '请选择单位' : '暂无单位数据') }}</option>
+											<option v-for="unit in units" :key="unit.unitId" :value="unit.unitId">{{ unit.unitName }}</option>
+										</select>
+									</div>
+								</div>
+								<div class="form-group">
+									<label>保存条件</label>
+									<input type="text" v-model="productForm.storageCondition" />
+								</div>
+							</div>
+
+							<div class="form-row">
+								<div class="form-group" style="flex: 2;">
+									<label>产品介绍</label>
+									<textarea v-model="productForm.description"></textarea>
+								</div>
+							</div>
+
+							<div class="form-row">
+								<div class="form-group">
+									<label>规格图(最多添加5张)</label>
+									<div class="image-upload">
+										<input
+											id="specImages[]"
+											name="specImages[]"
+											type="file"
+											ref="specFileInput"
+											class="file-input"
+											accept="image/*"
+											multiple
+											@change="handleSpecImageUpload"
+											style="display: none;"
+										/>
+										<div class="image-item" v-for="(image, index) in productForm.specImages" :key="'spec-' + index">
+											<img :src="specImagePreviews[index] || image" alt="规格图片" @click="openImagePreview(specImagePreviews[index] || image)" />
+											<div class="remove-image-btn" @click="removeSpecImage(index)">×</div>
+										</div>
+										<div class="add-image-btn" @click="selectSpecImage" v-if="productForm.specImages.length < 5">
+											<span class="add-icon">+</span>
+											<span class="add-text">添加规格图</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							
+							<div class="form-actions">
+								<button class="btn btn-success" @click="saveProduct" :disabled="submitting">{{ submitting ? '提交中...' : '修改产品' }}</button>
+								<button class="btn btn-default" @click="cancel">取消</button>
+							</div>
+							<div v-if="submitMessage" style="margin-top: 12px; color: #9a3412; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 8px 10px;">
+								{{ submitMessage }}
+							</div>
+						</div>
+					</div>
+
+					<div v-if="previewImageUrl" class="image-preview-overlay" @click="closeImagePreview">
+						<span class="image-preview-close" @click.stop="closeImagePreview">×</span>
+						<img :src="previewImageUrl" class="image-preview-content" @click.stop />
+					</div>
+
+					<div v-if="previewVideoItem" class="video-preview-overlay" @click="closeVideoPreview">
+						<span class="video-preview-close" @click.stop="closeVideoPreview">×</span>
+						<video class="video-preview-content" controls @click.stop>
+							<source :src="previewVideoItem.url" :type="previewVideoItem.type === 'video/mp4' ? 'video/mp4' : 'video/webm'" />
+						</video>
+					</div>
+				</main>
+			</div>
+		</div>
+		
+		<script>
+			const { createApp } = Vue
+			const PRODUCT_DETAIL_API = FarmAPI.url('/api/product/detail');
+			const PRODUCT_API_ORIGIN = new URL(PRODUCT_DETAIL_API).origin;
+			const UNITS_API = FarmAPI.url('/api/product/units');
+			const CATEGORIES_API = FarmAPI.url('/api/product/categories');
+			const STATUSES_API = FarmAPI.url('/api/product/statuses');
+			const COMMON_UPLOAD_API = FarmAPI.url('/api/common/upload');
+			const UPLOAD_MAX_SIZE = 50 * 1024 * 1024;
+			const UPLOAD_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avi'];
+			
+			createApp({
+				data() {
+					return {
+						productId: '',
+						loadError: '',
+						submitting: false,
+						submitMessage: '',
+						coverImagePreview: '',
+						specImagePreviews: [],
+						previewImageUrl: '',
+						previewVideoItem: null,
+						units: [],
+						unitsLoading: false,
+						categories: [],
+						statuses: [],
+						// 产品表单
+						productForm: {
+							id: '',
+							name: '',
+							price: '',
+							stock: '',
+							productType: '',
+							status: '',
+							coverImage: '',
+							carouselMedia: [],
+							netWeight: '',
+							unitId: '',
+							weightUnit: '',
+							storageCondition: '',
+							specImages: [],
+							description: ''
+						}
+					}
+				},
+				
+				async mounted() {
+					this.loadCategories();
+					await Promise.all([
+						this.loadStatuses(),
+						this.loadUnits()
+					]);
+					const urlParams = new URLSearchParams(window.location.search);
+					const productId = urlParams.get('id');
+					if (productId) {
+						this.productId = productId;
+						this.loadProductData(productId);
+					}
+				},
+				
+				methods: {
+					// 跳转到指定页面
+					navigateTo(page) {
+						window.location.href = page;
+					},
+
+					getUnitListPayload(data) {
+						const pageData = data && typeof data === 'object' && !Array.isArray(data)
+							? (data.data || data)
+							: data;
+						return Array.isArray(pageData?.records)
+							? pageData.records
+							: (Array.isArray(pageData?.list)
+								? pageData.list
+								: (Array.isArray(pageData?.rows)
+									? pageData.rows
+									: (Array.isArray(pageData) ? pageData : [])));
+					},
+
+					normalizeUnit(unit) {
+						if (!unit || typeof unit !== 'object') {
+							return null;
+						}
+
+						const unitId = unit.unitId ?? unit.id;
+						const unitName = String(unit.unitName || unit.name || unit.weightUnit || '').trim();
+						if (unitId == null || unitId === '' || !unitName) {
+							return null;
+						}
+						return {
+							unitId,
+							unitName,
+							unitCode: unit.unitCode || unit.code || '',
+							isEnabled: unit.isEnabled ?? unit.enabled ?? 1
+						};
+					},
+
+					isUnitsSuccessResponse(data) {
+						const codeText = String(data?.code ?? '').toLowerCase();
+						const messageText = String(data?.message || data?.msg || '').trim().toLowerCase();
+						return data?.code == null
+							|| Number(data.code) === 0
+							|| Number(data.code) === 200
+							|| codeText === 'success'
+							|| data?.success === true
+							|| messageText === 'success'
+							|| messageText.includes('成功');
+					},
+
+					async loadUnits() {
+						this.unitsLoading = true;
+						try {
+							const response = await fetch(UNITS_API, {
+								headers: window.Auth && typeof window.Auth.getAuthHeaders === 'function'
+									? window.Auth.getAuthHeaders()
+									: {}
+							});
+							const responseText = await response.text();
+							let data = {};
+							try {
+								data = responseText ? JSON.parse(responseText) : {};
+							} catch (error) {
+								throw new Error('单位列表接口返回格式不是 JSON');
+							}
+
+							if (!response.ok || !this.isUnitsSuccessResponse(data)) {
+								throw new Error(data.message || data.msg || `加载单位列表失败，HTTP 状态码：${response.status}`);
+							}
+
+							this.units = this.getUnitListPayload(data)
+								.map(unit => this.normalizeUnit(unit))
+								.filter(unit => unit && Number(unit.isEnabled) !== 0);
+							this.syncUnitIdFromWeightUnit();
+							this.ensureCurrentUnitOption();
+							this.syncWeightUnitFromUnitId();
+						} catch (error) {
+							console.error('加载单位列表失败:', error);
+							this.units = [];
+						} finally {
+							this.unitsLoading = false;
+						}
+					},
+
+					async loadCategories() {
+						try {
+							const response = await fetch(CATEGORIES_API, {
+								headers: window.Auth && typeof window.Auth.getAuthHeaders === 'function'
+									? window.Auth.getAuthHeaders()
+									: {}
+							});
+							const data = await FarmAPI.parseResponse(response);
+							if (data.code === 0 || data.code === 200) {
+								this.categories = Array.isArray(data.data) ? data.data : [];
+							} else {
+								console.warn('加载分类列表失败:', data.message);
+								this.categories = [];
+							}
+						} catch (error) {
+							console.warn('加载分类列表接口异常:', error);
+							this.categories = [];
+						}
+					},
+
+					async loadStatuses() {
+						try {
+							const response = await fetch(STATUSES_API, {
+								headers: window.Auth && typeof window.Auth.getAuthHeaders === 'function'
+									? window.Auth.getAuthHeaders()
+									: {}
+							});
+							const data = await FarmAPI.parseResponse(response);
+							if (data.code === 0 || data.code === 200) {
+								this.statuses = Array.isArray(data.data) ? data.data : [];
+								console.log('状态列表请求成功:', this.statuses);
+							} else {
+								console.warn('加载状态列表失败:', data.message);
+								this.statuses = [];
+							}
+						} catch (error) {
+							console.warn('加载状态列表接口异常:', error);
+							this.statuses = [];
+						}
+					},
+
+					ensureCurrentUnitOption() {
+						const weightUnit = String(this.productForm.weightUnit || '').trim();
+						if (!weightUnit) {
+							return;
+						}
+						if (!this.productForm.unitId) {
+							const matchedUnit = this.findUnitByName(weightUnit) || this.findUnitById(weightUnit);
+							this.productForm.unitId = matchedUnit ? matchedUnit.unitId : weightUnit;
+						}
+						if (this.units.some(unit => String(unit.unitId) === String(this.productForm.unitId))) {
+							return;
+						}
+					},
+
+					syncUnitIdFromWeightUnit() {
+						if (this.productForm.unitId) {
+							return;
+						}
+						const weightUnit = String(this.productForm.weightUnit || '').trim();
+						if (!weightUnit) {
+							return;
+						}
+						const matchedUnit = this.findUnitByName(weightUnit) || this.findUnitById(weightUnit);
+						if (matchedUnit) {
+							this.productForm.unitId = matchedUnit.unitId;
+							this.productForm.weightUnit = matchedUnit.unitName;
+						}
+					},
+
+					syncWeightUnitFromUnitId() {
+						const selectedUnit = this.units.find(unit => String(unit.unitId) === String(this.productForm.unitId));
+						if (selectedUnit) {
+							this.productForm.weightUnit = selectedUnit.unitName;
+						}
+					},
+
+					hasFieldValue(value) {
+						return value !== undefined && value !== null && String(value).trim() !== '';
+					},
+
+					findUnitById(unitId) {
+						return this.units.find(unit => String(unit.unitId) === String(unitId));
+					},
+
+					findUnitByName(unitName) {
+						const text = String(unitName || '').trim();
+						if (!text) {
+							return null;
+						}
+						return this.units.find(unit => unit.unitName === text || String(unit.unitCode || '') === text) || null;
+					},
+
+					resolveProductUnitId(product) {
+						const directUnitId = product.unitId ?? product.unitID ?? product.unit_id;
+						if (this.hasFieldValue(directUnitId)) {
+							return directUnitId;
+						}
+
+						const weightUnit = product.weightUnit;
+						if (this.hasFieldValue(weightUnit)) {
+							if (Number.isFinite(Number(weightUnit)) || this.findUnitById(weightUnit)) {
+								return weightUnit;
+							}
+							const matchedUnit = this.findUnitByName(weightUnit);
+							if (matchedUnit) {
+								return matchedUnit.unitId;
+							}
+						}
+
+						const namedUnit = this.findUnitByName(product.unitName || product.unit);
+						return namedUnit ? namedUnit.unitId : '';
+					},
+
+					resolveProductWeightUnit(product, unitId) {
+						const selectedUnit = this.findUnitById(unitId);
+						if (selectedUnit) {
+							return selectedUnit.unitName;
+						}
+
+						const directName = String(product.unitName || product.unit || '').trim();
+						if (directName) {
+							return directName;
+						}
+
+						const weightUnit = String(product.weightUnit || '').trim();
+						if (!weightUnit || String(unitId) === weightUnit || Number.isFinite(Number(weightUnit))) {
+							return '';
+						}
+						return weightUnit;
+					},
+
+					buildPreviewUrl(file) {
+						return URL.createObjectURL(file);
+					},
+
+					validateUploadFile(file) {
+						if (!file) {
+							throw new Error('请选择要上传的文件');
+						}
+						const extension = String(file.name || '').split('.').pop().toLowerCase();
+						if (!UPLOAD_ALLOWED_EXTENSIONS.includes(extension)) {
+							throw new Error('文件格式不支持，请上传 jpg、jpeg、png、gif、webp、mp4、mov、avi');
+						}
+						if (file.size > UPLOAD_MAX_SIZE) {
+							throw new Error('文件大小不能超过 50MB');
+						}
+					},
+
+					async uploadProductFile(file) {
+						this.validateUploadFile(file);
+						const formData = new FormData();
+						formData.append('file', file);
+						const authHeaders = window.Auth && typeof window.Auth.getAuthHeaders === 'function'
+							? window.Auth.getAuthHeaders()
+							: {};
+						delete authHeaders['Content-Type'];
+
+						const response = await fetch(COMMON_UPLOAD_API, {
+							method: 'POST',
+							headers: authHeaders,
+							body: formData
+						});
+						const responseText = await response.text();
+						let data = {};
+						try {
+							data = responseText ? JSON.parse(responseText) : {};
+						} catch (error) {
+							throw new Error('文件上传接口返回格式不是 JSON');
+						}
+
+						const success = response.ok && (Number(data.code) === 0 || Number(data.code) === 200 || data.success === true);
+						const uploadUrl = typeof data.data === 'string' ? data.data : data.data?.url;
+						if (!success || !uploadUrl) {
+							throw new Error(data.message || data.msg || '文件上传失败');
+						}
+						return String(uploadUrl).trim();
+					},
+
+					openImagePreview(url) {
+						this.previewImageUrl = url;
+					},
+
+					closeImagePreview() {
+						this.previewImageUrl = '';
+					},
+
+					openVideoPreview(videoItem) {
+						this.previewVideoItem = videoItem;
+					},
+
+					closeVideoPreview() {
+						this.previewVideoItem = null;
+					},
+					
+					resolveMediaUrl(value) {
+						const mediaUrl = String(value || '').trim();
+						if (!mediaUrl) {
+							return '';
+						}
+						if (/^(https?:)?\/\//i.test(mediaUrl) || mediaUrl.startsWith('data:')) {
+							return mediaUrl;
+						}
+						return mediaUrl.startsWith('/')
+							? `${PRODUCT_API_ORIGIN}${mediaUrl}`
+							: `${PRODUCT_API_ORIGIN}/${mediaUrl}`;
+					},
+
+					parseArray(value) {
+						if (Array.isArray(value)) {
+							return value;
+						}
+						if (!value) {
+							return [];
+						}
+						try {
+							const parsed = JSON.parse(value);
+							return Array.isArray(parsed) ? parsed : [];
+						} catch (error) {
+							return [];
+						}
+					},
+
+					getMediaType(url, type = '') {
+						if (type) {
+							return type;
+						}
+						return /\.(mp4|webm|ogg|mov)$/i.test(String(url || '')) ? 'video' : 'image';
+					},
+
+					normalizeCarouselMedia(value) {
+						return this.parseArray(value).map(item => {
+							if (typeof item === 'string') {
+								return {
+									type: this.getMediaType(item),
+									url: this.resolveMediaUrl(item),
+									thumb: ''
+								};
+							}
+							const url = item.url || item.image || item.path || '';
+							return {
+								type: this.getMediaType(url, item.type),
+								url: this.resolveMediaUrl(url),
+								thumb: this.resolveMediaUrl(item.thumb || item.cover || item.coverImage || '')
+							};
+						}).filter(item => item.url).slice(0, 5);
+					},
+
+					normalizeSpecImages(value) {
+						return this.parseArray(value)
+							.map(item => this.resolveMediaUrl(typeof item === 'string' ? item : (item.url || item.image || item.path || '')))
+							.filter(Boolean)
+							.slice(0, 5);
+					},
+
+					normalizeStatus(status) {
+						const text = String(status || '').trim();
+						if (!text) {
+							return '';
+						}
+						// 先在状态列表中查找匹配的状态名称
+						const matchedStatus = this.statuses.find(s => 
+							s.statusName === text || 
+							String(s.commodityStatusId) === text ||
+							s.statusName === '已' + text
+						);
+						if (matchedStatus) {
+							return matchedStatus.statusName;
+						}
+						// 如果没有匹配，尝试常见的映射
+						if (['已上架', '上架', '1', 'true', 'active', 'on', 'ON_SALE'].includes(text)) {
+							const onShelf = this.statuses.find(s => s.statusName === '上架');
+							return onShelf ? onShelf.statusName : '上架';
+						}
+						if (['已下架', '下架', '0', 'false', 'inactive', 'off', 'OFF_SALE'].includes(text)) {
+							const offShelf = this.statuses.find(s => s.statusName === '下架');
+							return offShelf ? offShelf.statusName : '下架';
+						}
+						return text;
+					},
+
+					getProductDetail(data) {
+						const detail = data && typeof data === 'object' ? (data.data || data) : {};
+						return detail.product && typeof detail.product === 'object' ? detail.product : detail;
+					},
+
+					fillProductForm(product) {
+						product = product || {};
+						const unitId = this.resolveProductUnitId(product);
+						const weightUnit = this.resolveProductWeightUnit(product, unitId);
+						this.coverImagePreview = '';
+						this.specImagePreviews = [];
+						const originalStatus = product.status;
+						const normalizedStatus = this.normalizeStatus(originalStatus);
+						console.log('状态映射调试 - 原始值:', originalStatus, '| 状态列表:', this.statuses, '| 映射结果:', normalizedStatus);
+						this.productForm = {
+							id: product.id || product.productId || this.productId,
+							name: product.name || product.productName || '',
+							price: product.price ?? '',
+							stock: product.stock ?? 0,
+							productType: product.productType || '实物',
+							status: normalizedStatus,
+							coverImage: this.resolveMediaUrl(product.coverImage || product.image || ''),
+							carouselMedia: this.normalizeCarouselMedia(product.carouselMedia),
+							netWeight: product.netWeight ?? product.weight ?? '',
+							unitId,
+							weightUnit,
+							storageCondition: product.storageCondition || product.storage || '',
+							specImages: this.normalizeSpecImages(product.specImages),
+							description: product.description || product.detail || product.productDescription || ''
+						};
+						this.specImagePreviews = new Array(this.productForm.specImages.length).fill("");
+						this.syncUnitIdFromWeightUnit();
+						this.ensureCurrentUnitOption();
+						this.syncWeightUnitFromUnitId();
+					},
+
+					// 加载产品详情数据，并把接口返回字段写入编辑表单。
+					async loadProductData(id) {
+						this.loadError = '';
+						this.submitMessage = '';
+						try {
+							const response = await fetch(`${PRODUCT_DETAIL_API}?id=${encodeURIComponent(id)}`, {
+								headers: window.Auth.getAuthHeaders()
+							});
+							const data = await FarmAPI.parseResponse(response);
+							const success = data.code == null || Number(data.code) === 200 || Number(data.code) === 0 || data.success === true;
+							if (!response.ok || !success) {
+								this.loadError = data.message || data.msg || '获取产品详情失败';
+								console.error('获取产品详情失败:', data);
+								return;
+							}
+							const product = this.getProductDetail(data);
+							this.fillProductForm(product);
+							console.log('产品详情请求成功:', product);
+						} catch (error) {
+							this.loadError = '网络错误，获取产品详情失败';
+							console.error('获取产品详情失败:', error);
+						}
+					},
+					
+					// 选择封面图片
+					selectCoverImage() {
+						this.$refs.coverFileInput.click();
+					},
+					
+					// 处理封面图片上传
+					async handleCoverImageUpload(event) {
+						const file = event.target.files[0];
+						if (file) {
+							this.coverImagePreview = this.buildPreviewUrl(file);
+							console.groupCollapsed('编辑产品封面:', file.name);
+							console.log('图片信息:', {
+								name: file.name,
+								type: file.type,
+								size: file.size
+							});
+							try {
+								this.productForm.coverImage = await this.uploadProductFile(file);
+								this.submitMessage = '';
+								console.log('上传成功:', this.productForm.coverImage);
+							} catch (error) {
+								console.error('封面上传失败:', error);
+								this.coverImagePreview = '';
+								this.productForm.coverImage = '';
+								this.submitMessage = error.message || '封面上传失败';
+							}
+							console.groupEnd();
+						}
+						event.target.value = '';
+					},
+					
+					// 移除封面图片
+					removeCoverImage() {
+						this.productForm.coverImage = '';
+						this.coverImagePreview = '';
+					},
+					
+					// 选择轮播图/视频
+					selectCarouselMedia() {
+						this.$refs.carouselFileInput.click();
+					},
+					
+					// 处理轮播图/视频上传
+					async handleCarouselFileUpload(event) {
+						const file = event.target.files[0];
+						if (file) {
+							const isVideo = file.type.startsWith('video/');
+							console.groupCollapsed('编辑产品轮播媒体:', file.name);
+							console.log('媒体信息:', {
+								name: file.name,
+								type: file.type,
+								size: file.size,
+								isVideo: isVideo
+							});
+							if (this.productForm.carouselMedia.length < 5) {
+								const previewUrl = isVideo ? '' : this.buildPreviewUrl(file);
+								const previewThumb = isVideo ? this.generateVideoThumb(file.name) : '';
+								try {
+									const uploadUrl = await this.uploadProductFile(file);
+									const mediaItem = {
+										type: isVideo ? 'video' : 'image',
+										url: uploadUrl,
+										thumb: '',
+										previewUrl: previewUrl,
+										previewThumb: previewThumb
+									};
+									this.productForm.carouselMedia.push(mediaItem);
+									this.submitMessage = '';
+									console.log('上传成功:', uploadUrl);
+								} catch (error) {
+									console.error('轮播媒体上传失败:', error);
+									this.submitMessage = error.message || '轮播媒体上传失败';
+								}
+							}
+						}
+						event.target.value = '';
+					},
+					
+					// 生成视频缩略图
+					generateVideoThumb(fileName) {
+						const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" fill="#1a1a1a"/><circle cx="80" cy="80" r="45" fill="#333"/><polygon points="68,70 68,90 95,80" fill="#fff"/></svg>';
+						return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+					},
+					
+					// 处理媒体加载失败
+					handleMediaLoadError(event) {
+						event.target.style.display = 'none';
+					},
+					
+					// 移除轮播图/视频
+					removeCarouselMedia(index) {
+						this.productForm.carouselMedia.splice(index, 1);
+					},
+					
+					// 选择规格图片
+					selectSpecImage() {
+						this.$refs.specFileInput.click();
+					},
+					
+					// 处理规格图片上传
+					async handleSpecImageUpload(event) {
+						const remaining = 5 - this.productForm.specImages.length;
+						if (remaining <= 0) {
+							event.target.value = '';
+							return;
+						}
+
+						const files = Array.from(event.target.files || [])
+							.filter(file => file && file.type && file.type.startsWith('image/'))
+							.slice(0, remaining);
+
+						for (const file of files) {
+							if (this.productForm.specImages.length >= 5) break;
+							
+							console.groupCollapsed('编辑产品规格图片:', file.name);
+							console.log('图片信息:', {
+								name: file.name,
+								type: file.type,
+								size: file.size
+							});
+							
+							try {
+								const imageUrl = await this.uploadProductFile(file);
+								this.specImagePreviews.push(this.buildPreviewUrl(file));
+								this.productForm.specImages.push(imageUrl);
+								this.submitMessage = '';
+								console.log('上传成功:', imageUrl);
+							} catch (error) {
+								console.error('规格图片上传失败:', error);
+								this.submitMessage = error.message || '规格图片上传失败';
+							}
+						}
+						event.target.value = '';
+					},
+					
+					// 移除规格图片
+					removeSpecImage(index) {
+						this.productForm.specImages.splice(index, 1);
+						this.specImagePreviews.splice(index, 1);
+					},
+					
+					// 保存产品：调用修改产品 API，成功后返回产品列表页。
+					async saveProduct() {
+						const bodyData = {
+							id: Number(this.productForm.id) || 0,
+							name: String(this.productForm.name || '').trim(),
+							price: Number(this.productForm.price) || 0,
+							stock: Number(this.productForm.stock) || 0,
+							productType: String(this.productForm.productType || '').trim(),
+							status: this.productForm.status,
+							coverImage: this.productForm.coverImage,
+							carouselMedia: this.productForm.carouselMedia.map(item => ({
+								type: item.type || '',
+								url: item.url || '',
+								thumb: item.thumb || ''
+							})),
+							unitId: Number(this.productForm.unitId) || null,
+							netWeight: Number(this.productForm.netWeight) || 0,
+							weightUnit: String(this.productForm.weightUnit || '').trim(),
+							storageCondition: String(this.productForm.storageCondition || '').trim(),
+							specImages: this.productForm.specImages,
+							description: String(this.productForm.description || '').trim()
+						};
+
+						if (!bodyData.coverImage) {
+							this.submitMessage = '请上传封面图';
+							return;
+						}
+						if (!bodyData.name) {
+							this.submitMessage = '产品名称不能为空';
+							return;
+						}
+
+						this.submitting = true;
+						this.submitMessage = '';
+
+						try {
+							const res = await fetch(FarmAPI.url('/api/product/edit'), {
+								method: 'POST',
+								headers: window.Auth.getAuthHeaders({
+									'Content-Type': 'application/json'
+								}),
+								body: JSON.stringify(bodyData)
+							});
+							const data = await FarmAPI.parseResponse(res);
+							
+							if (res.status === 401 || res.status === 403) {
+								window.Auth.clearAuth();
+								window.Auth.redirectToLogin();
+								return;
+							}
+
+							const success = !data.code || Number(data.code) === 200 || data.success;
+							if (res.ok && success) {
+								window.location.href = 'product.html';
+								return;
+							}
+							this.submitMessage = data.message || '修改产品失败';
+						} catch (error) {
+							this.submitMessage = '网络错误，请重试';
+						} finally {
+							this.submitting = false;
+						}
+					},
+					
+					// 取消
+					cancel() {
+						// 跳回产品管理页面
+						window.location.href = 'product.html';
+					}
+				,
+
+				logout() {
+					if (confirm('确定要退出登录吗？')) {
+						if (window.Auth && typeof window.Auth.clearAuth === 'function') {
+							window.Auth.clearAuth();
+						} else {
+							localStorage.removeItem('token');
+							localStorage.removeItem('userInfo');
+						}
+						window.location.href = 'login.html';
+					}
+				}
+}
+			}).mount('#app')
+		</script>
+	</body>
+</html>
+

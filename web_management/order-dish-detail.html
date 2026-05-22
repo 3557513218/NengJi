@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>农场管理后台-菜品订单明细</title>
+	<style>
+		.content{
+			flex: 1;
+			padding: 20px;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+			overflow: hidden;
+		}
+		.top-nav{
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 20px;
+			padding-bottom: 10px;
+			border-bottom: 1px solid #e2e8f0;
+			flex-shrink: 0;
+		}
+		.back-btn{
+			padding: 8px 16px;
+			border: 1px solid #e2e8f0;
+			background: white;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 14px;
+			color: #4a5568;
+			margin-bottom: 20px;
+			transition: all 0.3s;
+			align-self: flex-start;
+			flex-shrink: 0;
+		}
+		
+		.back-btn:hover{
+			background: #3182ce;
+			color: white;
+			border-color: #3182ce;
+		}
+
+		.detail-scroll{
+			flex: 1;
+			min-height: 0;
+			overflow-y: auto;
+			padding-right: 4px;
+		}
+		.info-section{
+			background: white;
+			border-radius: 8px;
+			padding: 20px;
+			margin-bottom: 20px;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		}
+		
+		.section-title{
+			font-size: 16px;
+			font-weight: bold;
+			color: #2d3748;
+			margin-bottom: 15px;
+			padding-bottom: 10px;
+			border-bottom: 1px solid #e2e8f0;
+		}
+		.section-title.with-action{
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+		}
+		.info-table{
+			width: 100%;
+		}
+		
+		.info-table td{
+			padding: 10px 0;
+			vertical-align: top;
+		}
+		
+		.info-table .label{
+			width: 120px;
+			color: #718096;
+			font-size: 14px;
+		}
+		
+		.info-table .value{
+			color: #2d3748;
+			font-size: 14px;
+			font-weight: 500;
+		}
+		.detail-table-wrapper{
+			width: 100%;
+			min-width: 680px;
+		}
+
+		.detail-table{
+			width: 100%;
+			border-collapse: collapse;
+			table-layout: fixed;
+		}
+		
+		.detail-table th,
+		.detail-table td{
+			padding: 14px 16px;
+			border-bottom: 1px solid #e2e8f0;
+		}
+		
+		.detail-table th{
+			background: #f7fafc;
+			font-weight: bold;
+			color: #4a5568;
+			font-size: 14px;
+			text-align: center;
+		}
+		
+		.detail-table td{
+			font-size: 14px;
+			color: #2d3748;
+		}
+		
+		.detail-table tr:hover{
+			background: #f7fafc;
+		}
+
+		.detail-table td:first-child,
+		.detail-table th:first-child{
+			width: 60px;
+			text-align: center;
+			white-space: nowrap;
+		}
+
+		.detail-table td:nth-child(2),
+		.detail-table th:nth-child(2){
+			text-align: left;
+			width: calc(100% - 60px - 100px - 140px - 140px);
+			min-width: 150px;
+		}
+
+		.detail-table td:nth-child(3),
+		.detail-table th:nth-child(3){
+			width: 100px;
+			text-align: center;
+			white-space: nowrap;
+		}
+
+		.detail-table td:nth-child(4),
+		.detail-table th:nth-child(4){
+			width: 140px;
+			text-align: right;
+			white-space: nowrap;
+		}
+
+		.detail-table td:nth-child(5),
+		.detail-table th:nth-child(5){
+			width: 140px;
+			text-align: right;
+			white-space: nowrap;
+		}
+
+		.dish-name{
+			font-weight: 600;
+			color: #1f2937;
+		}
+		.total-row{
+			background: #f7fafc !important;
+			font-weight: bold;
+		}
+		
+		.total-row td{
+			color: #e53e3e;
+		}
+		.status-tag{
+			padding: 4px 12px;
+			border-radius: 4px;
+			font-size: 12px;
+			font-weight: bold;
+		}
+		.btn-refund{
+			padding: 6px 16px;
+			background: #c9a227;
+			color: white;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 14px;
+			transition: all 0.3s;
+		}
+
+		.btn-refund:hover{
+			background: #a8841f;
+		}
+
+		.btn-refund:disabled{
+			cursor: not-allowed;
+			opacity: 0.6;
+		}
+
+		.refund-message{
+			margin-top: 12px;
+			padding: 10px 12px;
+			border-radius: 8px;
+			font-size: 13px;
+			line-height: 1.6;
+		}
+
+		.refund-message.error{
+			background: #fff7ed;
+			border: 1px solid #fed7aa;
+			color: #9a3412;
+		}
+
+		.refund-message.success{
+			background: #f0fdf4;
+			border: 1px solid #bbf7d0;
+			color: #166534;
+		}
+
+		.status-tag.paid{
+			background: #e6fffa;
+			color: #38b2ac;
+		}
+		
+		.status-tag.unpaid{
+			background: #fff5f5;
+			color: #f56565;
+		}
+		
+		.status-tag.delivered{
+			background: #e6fffa;
+			color: #38b2ac;
+		}
+
+		.status-tag.processing{
+			background: #feebc8;
+			color: #9a3412;
+		}
+
+		.status-tag.completed{
+			background: #dcfce7;
+			color: #166534;
+		}
+
+		.status-tag.refunded{
+			background: #fee2e2;
+			color: #b91c1c;
+		}
+
+		.status-tag.pending{
+			background: #fffaf0;
+			color: #ed8936;
+		}
+	</style>
+	<link rel="stylesheet" href="css/admin-base.css" />
+	<link rel="stylesheet" href="css/admin-components.css" />
+	<script src="js/admin-utils.js"></script>
+	</head>
+<body>
+	<div id="app">
+		<div class="main-container">
+			<!-- 侧边栏 -->
+			<aside class="sidebar">
+				<div class="sidebar-header">农场管理后台</div>
+				<ul class="sidebar-menu">
+					<li @click="navigateTo('product.html')">产品管理</li>
+					<li class="active" @click="navigateTo('order.html')">订单管理</li>
+					<li @click="navigateTo('dish.html')">菜品管理</li>
+					<li @click="navigateTo('coupon.html')">活动券管理</li>
+					<li @click="navigateTo('user.html')">用户管理</li>
+				</ul>
+			</aside>
+			
+			<!-- 主内容区 -->
+			<main class="content">
+				<!-- 顶部导航 -->
+				<header class="top-nav">
+					<div>农场管理后台-菜品订单明细</div>
+					<div class="user-info">
+						<div class="user-avatar">用</div>
+						<div class="user-info-row">
+							<div>用户12312</div>
+							<button class="btn-logout" @click="logout">退出登录</button>
+						</div>
+					</div>
+				</header>
+				
+				<!-- 返回按钮 -->
+				<button class="back-btn" @click="goBack">返回</button>
+
+				<div class="detail-scroll">
+					<!-- 菜品订单信息 -->
+					<div class="info-section">
+						<div class="section-title">菜品订单信息</div>
+						<table class="info-table">
+							<tr>
+								<td class="label">订单号</td>
+								<td class="value">{{ orderInfo.orderNo }}</td>
+								<td class="label">菜品点餐类型</td>
+								<td class="value">{{ orderInfo.orderType }}</td>
+							</tr>
+							<tr>
+								<td class="label">客户微信号</td>
+								<td class="value">{{ buyerInfo.customerWechat }}</td>
+								<td class="label">餐桌号</td>
+								<td class="value">{{ orderInfo.tableNo }}</td>
+							</tr>
+							<tr>
+								<td class="label">下单时间</td>
+								<td class="value">{{ formatDisplayTime(orderInfo.createTime) }}</td>
+								<td class="label">订单状态</td>
+								<td class="value">
+									<span :class="['status-tag', getStatusClass(orderInfo.orderStatus, 'order')]">
+										{{ orderInfo.orderStatus }}
+									</span>
+								</td>
+							</tr>
+							<tr>
+								<td class="label">支付状态</td>
+								<td class="value">
+									<span :class="['status-tag', getStatusClass(orderInfo.paymentStatus, 'payment')]">
+										{{ orderInfo.paymentStatus }}
+									</span>
+								</td>
+								<td class="label">后厨状态</td>
+								<td class="value">
+									<span :class="['status-tag', getStatusClass(orderInfo.kitchenStatus, 'kitchen')]">
+										{{ orderInfo.kitchenStatus }}
+									</span>
+								</td>
+							</tr>
+							<tr>
+								<td class="label">订单金额</td>
+								<td class="value" style="color: #e53e3e; font-weight: bold;">¥{{ formatAmount(orderInfo.totalAmount) }}</td>
+								<td class="label">支付方式</td>
+								<td class="value">{{ orderInfo.paymentMethod }}</td>
+							</tr>
+						</table>
+					</div>
+					
+					<!-- 菜品点单明细 -->
+					<div class="info-section">
+						<div class="section-title with-action">
+							<span>菜品点单明细</span>
+							<button class="btn-refund" @click="openDishRefundModal">退款</button>
+						</div>
+						<div class="detail-table-wrapper">
+							<table class="detail-table">
+								<thead>
+								<tr>
+									<th>序号</th>
+									<th>菜品名称</th>
+									<th>数量</th>
+									<th>单价(元)</th>
+									<th>小计(元)</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="(item, index) in orderItems" :key="item.name + '-' + index">
+									<td>{{ index + 1 }}</td>
+									<td><div class="dish-name">{{ item.name }}</div></td>
+									<td>{{ item.quantity }}</td>
+									<td>¥{{ formatAmount(item.price) }}</td>
+									<td>¥{{ formatAmount(item.subtotal) }}</td>
+								</tr>
+								<tr v-if="orderItems.length === 0">
+									<td colspan="5" style="text-align: center; padding: 40px; color: #9ca3af;">暂无菜品数据</td>
+								</tr>
+								<tr v-if="orderItems.length > 0" class="total-row">
+									<td colspan="4" style="text-align: right;">实付合计：</td>
+									<td style="text-align: right;">¥{{ formatAmount(orderInfo.totalAmount) }}</td>
+								</tr>
+							</tbody>
+							</table>
+						</div>
+					</div>
+					
+					<!-- 点餐用户信息 -->
+					<div class="info-section">
+						<div class="section-title">点餐用户信息</div>
+						<table class="info-table">
+							<tr>
+								<td class="label">昵称</td>
+								<td class="value">{{ buyerInfo.nickname }}</td>
+								<td class="label">姓名</td>
+								<td class="value">{{ buyerInfo.name }}</td>
+							</tr>
+							<tr>
+								<td class="label">客户微信号</td>
+								<td class="value">{{ buyerInfo.customerWechat }}</td>
+								<td class="label">电话</td>
+								<td class="value">{{ buyerInfo.phone }}</td>
+							</tr>
+							<tr>
+								<td class="label">会员等级</td>
+								<td class="value">{{ buyerInfo.memberLevel }}</td>
+								<td class="label">下单来源</td>
+								<td class="value">{{ buyerInfo.orderSource }}</td>
+							</tr>
+							<tr>
+								<td class="label">用餐人数</td>
+								<td class="value">{{ buyerInfo.dinerCount }} 人</td>
+								<td class="label">就餐区域</td>
+								<td class="value">{{ buyerInfo.seatArea }}</td>
+							</tr>
+							<tr>
+								<td class="label">下单备注</td>
+								<td class="value" colspan="3">{{ buyerInfo.remark }}</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</main>
+			<!-- 退款弹窗 -->
+			<div v-if="dishRefundModalVisible" class="modal-mask" @click.self="closeDishRefundModal">
+				<div class="modal-dialog" style="max-width: 480px;">
+					<div class="modal-header">
+						<div class="modal-title">退款</div>
+					</div>
+					<div class="modal-body">
+						<div style="background: #f8fafc; border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+								<div>
+									<div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">订单编号</div>
+									<div style="font-size: 14px; font-weight: 600; color: #0f172a;">{{ orderInfo.orderNo || '-' }}</div>
+								</div>
+								<div>
+									<div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">订单金额</div>
+									<div style="font-size: 14px; font-weight: 600; color: #2563eb;">&yen;{{ formatAmount(orderInfo.totalAmount) }}</div>
+								</div>
+							</div>
+						</div>
+						<div style="margin-bottom: 8px;">
+							<label style="display: block; font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">退款原因 <span style="color: #94a3b8; font-weight: 400;">(选填)</span></label>
+							<textarea v-model="dishRefundReason" placeholder="请输入退款原因" style="width: 100%; min-height: 80px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; outline: none; box-sizing: border-box;"></textarea>
+						</div>
+						<div v-if="dishRefundMessage" :class="['refund-message', dishRefundMessageType]">{{ dishRefundMessage }}</div>
+					</div>
+					<div class="modal-actions">
+						<button class="btn btn-default" @click="closeDishRefundModal" :disabled="dishRefundSubmitting">取消</button>
+						<button class="btn-refund" @click="confirmDishRefundOrder" :disabled="dishRefundSubmitting">{{ dishRefundSubmitting ? '提交中...' : '确认退款' }}</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<script src="js/v3.2.8/vue.global.prod.js"></script>	<script src="js/api.js"></script>
+
+	<script src="js/auth.js"></script>
+
+	<script>
+		const { createApp } = Vue;
+		const DISH_ORDER_DETAIL_API = FarmAPI.url('/api/dish/order/detail');
+		
+		createApp({
+			data() {
+				return {
+					dishRefundModalVisible: false,
+					dishRefundReason: '',
+					dishRefundMessage: '',
+					dishRefundMessageType: '',
+					dishRefundSubmitting: false,
+					loading: true,
+					loadError: '',
+					orderInfo: {
+						orderNo: '',
+						orderType: '',
+						createTime: '',
+						orderStatus: '',
+						paymentStatus: '',
+						kitchenStatus: '',
+						tableNo: '',
+						totalAmount: 0,
+						paymentMethod: '',
+					},
+					orderItems: [],
+					buyerInfo: {
+						nickname: '',
+						name: '',
+						customerWechat: '',
+						phone: '',
+						memberLevel: '',
+						orderSource: '',
+						dinerCount: 0,
+						seatArea: '',
+						remark: ''
+					}
+				}
+			},
+			
+			mounted() {
+				const urlParams = new URLSearchParams(window.location.search);
+				const orderNo = urlParams.get('orderNo');
+				const phone = urlParams.get('phone');
+				this.loadOrderDetail(orderNo, phone);
+			},
+			
+			methods: {
+				formatAmount(value) {
+					const amount = Number(value);
+					if (!Number.isFinite(amount)) {
+						return '0.00';
+					}
+					return amount.toFixed(2);
+				},
+
+				formatDisplayTime(value) {
+					if (!value) {
+						return '';
+					}
+					const text = String(value).trim().replace(/\s*日\//g, ' ');
+					const match = text.match(/(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})(?:日)?\s+(\d{1,2})[:：](\d{1,2})/);
+					if (!match) {
+						return text;
+					}
+					const pad = item => String(item).padStart(2, '0');
+					return `${match[1]}-${pad(match[2])}-${pad(match[3])} ${pad(match[4])}:${pad(match[5])}`;
+				},
+
+				getStatusClass(status, type) {
+					if (type === 'payment') {
+						if (status === '已支付') return 'paid';
+						if (status === '待支付') return 'unpaid';
+						if (status === '已退款') return 'refunded';
+						return 'pending';
+					}
+
+					if (type === 'order') {
+						if (status === '已完成') return 'completed';
+						if (status === '待支付') return 'unpaid';
+						if (status === '备餐中') return 'processing';
+						if (status === '已取消') return 'refunded';
+						return 'pending';
+					}
+
+					if (type === 'kitchen') {
+						if (status === '已出餐') return 'completed';
+						if (status === '待出餐' || status === '待接单') return 'processing';
+						if (status === '已取消') return 'refunded';
+						return 'pending';
+					}
+
+					if (type === 'dish') {
+						return status === '已上架' ? 'active' : 'inactive';
+					}
+
+					return 'pending';
+				},
+
+				navigateTo(page) {
+					window.location.href = page;
+				},
+				
+				goBack() {
+					window.location.href = 'order-dish.html';
+				},
+
+				openDishRefundModal() {
+					this.dishRefundReason = '';
+					this.dishRefundMessage = '';
+					this.dishRefundMessageType = '';
+					this.dishRefundModalVisible = true;
+				},
+
+				closeDishRefundModal() {
+					this.dishRefundModalVisible = false;
+					this.dishRefundReason = '';
+					this.dishRefundMessage = '';
+					this.dishRefundMessageType = '';
+				},
+
+				async confirmDishRefundOrder() {
+					const orderNo = this.orderInfo.orderNo;
+					if (!orderNo) {
+						this.dishRefundMessage = '未获取到订单信息，无法退款';
+						this.dishRefundMessageType = 'error';
+						return;
+					}
+					this.dishRefundSubmitting = true;
+					this.dishRefundMessage = '';
+					this.dishRefundMessageType = '';
+					try {
+						const data = await FarmAPI.dishOrder.refund({
+							orderNo: orderNo,
+							refundReason: this.dishRefundReason.trim() || undefined
+						});
+						if (!FarmAPI.isSuccessResponse(data)) {
+							this.dishRefundMessage = FarmAPI.getErrorMessage(data, '退款失败，请重试');
+							this.dishRefundMessageType = 'error';
+							this.dishRefundSubmitting = false;
+							return;
+						}
+						this.dishRefundMessage = '退款成功';
+						this.dishRefundMessageType = 'success';
+						window.setTimeout(() => {
+							this.closeDishRefundModal();
+							this.loadOrderDetail(orderNo);
+						}, 600);
+					} catch (e) {
+						console.error('退款请求失败:', e);
+						this.dishRefundMessage = '网络错误，退款请求失败，请重试';
+						this.dishRefundMessageType = 'error';
+					} finally {
+						this.dishRefundSubmitting = false;
+					}
+				},
+
+				async loadOrderDetail(orderNo, phone) {
+					this.loading = true;
+					this.loadError = '';
+
+					if (!orderNo) {
+						this.loadError = '订单号不能为空';
+						this.loading = false;
+						return;
+					}
+
+					try {
+						const params = new URLSearchParams();
+						params.set('orderNo', orderNo);
+						if (phone) {
+							params.set('phone', phone);
+						}
+
+						console.log('获取菜品订单详情:', { orderNo, phone });
+
+						const response = await fetch(`${DISH_ORDER_DETAIL_API}?${params.toString()}`, {
+							method: 'GET',
+							headers: window.Auth.getAuthHeaders()
+						});
+
+						const responseText = await response.text();
+						let data = {};
+						try {
+							data = responseText ? JSON.parse(responseText) : {};
+						} catch (parseError) {
+							console.error('响应解析失败:', parseError);
+							data = { message: responseText };
+						}
+
+						if (response.status === 401 || response.status === 403 || data.code === 401 || data.code === 403) {
+							window.Auth.clearAuth();
+							window.Auth.redirectToLogin();
+							return;
+						}
+
+						const codeText = String(data.code ?? '').toLowerCase();
+						const messageText = String(data.message || data.msg || '').trim().toLowerCase();
+						const success = data.code == null
+							|| Number(data.code) === 200
+							|| Number(data.code) === 0
+							|| codeText === 'success'
+							|| data.success === true
+							|| messageText === 'success'
+							|| messageText.includes('成功');
+
+						if (!response.ok || !success) {
+							this.loadError = data.message || '获取订单详情失败';
+							console.error('获取订单详情失败:', data);
+							this.loading = false;
+							return;
+						}
+
+						this.parseAndSetOrderDetail(data.data || data, phone);
+					} catch (error) {
+						console.error('获取订单详情请求异常:', error);
+						this.loadError = '网络错误，请重试';
+					} finally {
+						this.loading = false;
+					}
+				},
+
+				parseAndSetOrderDetail(data, phone) {
+					if (!data || typeof data !== 'object') {
+						this.loadError = '获取到的订单数据格式不正确';
+						return;
+					}
+
+					const orderData = data.orderInfo || data.order || data;
+					const items = data.orderItems || data.items || data.dishes || [];
+					const buyer = data.buyerInfo || data.customer || data.user || {};
+
+					this.orderInfo = {
+						orderNo: orderData.orderNo || orderData.orderId || orderData.id || '未知订单',
+						orderType: orderData.orderType || '现场菜品点餐',
+						createTime: this.formatDisplayTime(orderData.createTime || orderData.orderTime || orderData.createdAt || ''),
+						orderStatus: orderData.orderStatus || orderData.status || '未知状态',
+						paymentStatus: orderData.paymentStatus || orderData.payStatus || '待支付',
+						kitchenStatus: orderData.kitchenStatus || orderData.cookStatus || '',
+						tableNo: orderData.tableNo || orderData.tableId || orderData.tableName || '',
+						totalAmount: Number(orderData.totalAmount || orderData.amount || orderData.actualAmount || 0),
+						paymentMethod: orderData.paymentMethod || orderData.payMethod || '微信支付'
+					};
+
+					this.orderItems = Array.isArray(items) ? items.map((item, index) => ({
+						image: item.image || '',
+						name: item.name || item.dishName || `菜品${index + 1}`,
+						description: item.description || '',
+						remark: item.remark || '',
+						cookingNote: item.cookingNote || '',
+						quantity: Number(item.quantity || item.count || 1),
+						price: Number(item.price || 0),
+						subtotal: Number(item.subtotal || item.amount || (item.price * (item.quantity || 1)) || 0)
+					})) : [];
+
+					this.buyerInfo = {
+						nickname: buyer.nickname || buyer.name || '未知用户',
+						name: buyer.name || buyer.realName || '',
+						customerWechat: buyer.customerWechat || buyer.wechat || '',
+						phone: phone || buyer.phone || buyer.contactPhone || '',
+						memberLevel: buyer.memberLevel || '',
+						orderSource: buyer.orderSource || '',
+						dinerCount: Number(buyer.dinerCount) || 0,
+						seatArea: buyer.seatArea || '',
+						remark: buyer.remark || ''
+					};
+				}
+			,
+
+				logout() {
+					if (confirm('确定要退出登录吗？')) {
+						if (window.Auth && typeof window.Auth.clearAuth === 'function') {
+							window.Auth.clearAuth();
+						} else {
+							localStorage.removeItem('token');
+							localStorage.removeItem('userInfo');
+						}
+						window.location.href = 'login.html';
+					}
+				}
+}
+		}).mount('#app')
+	</script>
+</body>
+</html>
+

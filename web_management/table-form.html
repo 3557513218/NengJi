@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>农场管理后台 - 餐桌管理</title>
+		<script src="js/v3.2.8/vue.global.prod.js" type="text/javascript" charset="utf-8"></script>	<script src="js/api.js"></script>
+		<script src="js/qrcode-generator.js"></script>
+
+		<script src="js/auth.js"></script>
+
+		<link rel="stylesheet" href="css/admin-base.css" />
+	<link rel="stylesheet" href="css/admin-components.css" />
+	<link rel="stylesheet" href="css/admin-form.css" />
+	<script src="js/admin-utils.js"></script>
+	</head>
+
+	<style>
+
+		.content{
+			flex: 1;
+			padding: 20px;
+			overflow-y: auto;
+		}
+
+		.form-container{
+			background: white;
+			padding: 24px;
+			border-radius: 12px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+
+		.form-header{
+			margin-bottom: 24px;
+		}
+
+		.form-title{
+			font-size: 22px;
+			font-weight: 700;
+			color: #1f2937;
+		}
+
+		.form-subtitle{
+			margin-top: 8px;
+			font-size: 14px;
+			line-height: 1.7;
+			color: #64748b;
+		}
+
+		.form-row{
+			display: flex;
+			gap: 20px;
+			margin-bottom: 20px;
+		}
+
+		.form-group{
+			flex: 1;
+		}
+
+		.form-group label{
+			display: block;
+			margin-bottom: 8px;
+			font-weight: 500;
+			color: #334155;
+		}
+
+		.form-group input,
+		.form-group select,
+		.form-group textarea{
+			width: 100%;
+			padding: 10px 12px;
+			border: 1px solid #dbe2ea;
+			border-radius: 8px;
+			font-size: 14px;
+			outline: none;
+			transition: border-color 0.2s, box-shadow 0.2s;
+		}
+
+		.form-group input:focus,
+		.form-group select:focus,
+		.form-group textarea:focus{
+			border-color: #3182ce;
+			box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.12);
+		}
+
+		.form-group textarea{
+			min-height: 120px;
+			resize: vertical;
+			line-height: 1.7;
+		}
+
+		.input-with-action{
+			display: flex;
+			gap: 10px;
+			align-items: center;
+		}
+
+		.input-with-action input{
+			flex: 1;
+		}
+
+		.field-tip{
+			margin-top: 8px;
+			font-size: 12px;
+			color: #64748b;
+			line-height: 1.6;
+		}
+
+		.form-actions{
+			margin-top: 30px;
+			display: flex;
+			gap: 10px;
+		}
+
+		.btn{
+			padding: 10px 18px;
+			border: none;
+			border-radius: 8px;
+			cursor: pointer;
+			font-size: 14px;
+		}
+
+		.error-msg{
+			margin-top: 16px;
+			padding: 10px;
+			border-radius: 8px;
+			background: #fef2f2;
+			color: #dc2626;
+			font-size: 14px;
+			line-height: 1.5;
+		}
+
+		@media (max-width: 900px){
+			.form-row{
+				flex-direction: column;
+				gap: 16px;
+			}
+		}
+	</style>
+
+	<body>
+		<div id="app">
+			<div class="main-container">
+				<aside class="sidebar">
+					<div class="sidebar-header">农场管理后台</div>
+					<ul class="sidebar-menu">
+						<li @click="navigateTo('product.html')">产品管理</li>
+						<li @click="navigateTo('order.html')">订单管理</li>
+						<li class="active" @click="navigateTo('dish.html')">点餐管理</li>
+						<li @click="navigateTo('coupon.html')">活动券管理</li>
+						<li @click="navigateTo('user.html')">用户管理</li>
+					</ul>
+				</aside>
+
+				<main class="content">
+					<header class="top-nav">
+						<div>{{ pageHeader }}</div>
+						<div class="user-info">
+						<div class="user-avatar">用</div>
+						<div class="user-info-row">
+							<div>用户12312</div>
+							<button class="btn-logout" @click="logout">退出登录</button>
+						</div>
+					</div>
+					</header>
+
+					<div class="form-container">
+						<div class="form-header">
+							<div class="form-title">{{ formTitle }}</div>
+							<div class="form-subtitle">支持维护餐桌编号、容纳人数和状态，保存后会同步回餐桌管理列表。</div>
+						</div>
+
+						<div class="form-row">
+							<div class="form-group">
+								<label>餐桌编号</label>
+								<div class="input-with-action">
+									<input type="text" v-model.trim="tableForm.id" placeholder="例如 1号桌" :disabled="saving" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label>容纳人数</label>
+								<input type="number" min="1" max="30" v-model.number="tableForm.capacity" placeholder="请输入容纳人数" :disabled="saving" />
+							</div>
+						</div>
+
+						<div class="form-row">
+							<div class="form-group">
+								<label>餐桌状态</label>
+								<select v-model="tableForm.status" :disabled="saving">
+									<option value="空闲">空闲</option>
+									<option value="使用中">使用中</option>
+									<option value="停用">停用</option>
+								</select>
+							</div>
+						</div>
+
+						<div v-if="errorMessage" class="error-msg">{{ errorMessage }}</div>
+
+						<div class="form-actions">
+							<button class="btn btn-success" @click="saveTable" :disabled="saving">{{ saving ? '保存中...' : submitText }}</button>
+							<button class="btn btn-default" @click="cancel" :disabled="saving">取消</button>
+						</div>
+					</div>
+				</main>
+			</div>
+		</div>
+
+		<script>
+			const { createApp } = Vue;
+			const TABLE_API_BASE = FarmAPI.url('/api/table');
+			const STATUS_MAP = { '空闲': 1, '使用中': 2, '停用': 3 };
+
+			createApp({
+				data() {
+					return {
+						isEditMode: false,
+						editingTableId: '',
+						tableForm: {
+							id: '',
+							capacity: 4,
+							status: '空闲'
+						},
+						saving: false,
+						errorMessage: ''
+					}
+				},
+				computed: {
+					formTitle() {
+						return this.isEditMode ? '编辑餐桌' : '新增餐桌';
+					},
+					pageHeader() {
+						return this.isEditMode ? '农场管理后台-餐桌管理-编辑页面' : '农场管理后台-餐桌管理-新增页面';
+					},
+					submitText() {
+						return this.isEditMode ? '保存修改' : '新增餐桌';
+					}
+				},
+				mounted() {
+					const urlParams = new URLSearchParams(window.location.search);
+					const tableId = (urlParams.get('id') || '').trim();
+					if (tableId) {
+						this.isEditMode = true;
+						this.editingTableId = tableId;
+						this.loadTableDataFromAPI(tableId);
+					}
+					document.title = this.formTitle;
+				},
+				methods: {
+					navigateTo(page) {
+						window.location.href = page;
+					},
+
+					// ====== 加载编辑数据 ======
+
+					async loadTableDataFromAPI(tableId) {
+						try {
+							var res = await fetch(TABLE_API_BASE + '/detail/' + encodeURIComponent(tableId), {
+								headers: window.Auth.getAuthHeaders()
+							});
+							var data = await FarmAPI.parseResponse(res);
+							if (data.code !== 200 || !data.data) {
+								throw new Error(data.message || '获取餐桌信息失败');
+							}
+							var detail = data.data;
+							var statusText = '空闲';
+							if (detail.status === 1) statusText = '空闲';
+							else if (detail.status === 2) statusText = '使用中';
+							else if (detail.status === 3) statusText = '停用';
+							this.tableForm = {
+								id: detail.tableno || detail.id || '',
+								capacity: Number(detail.capacity || 4),
+								status: statusText
+							};
+						} catch (error) {
+							console.error('加载餐桌数据失败:', error);
+							alert(error.message || '加载餐桌数据失败');
+							this.cancel();
+						}
+					},
+
+					// ====== 新增 / 编辑提交 ======
+
+					async saveTable() {
+						this.errorMessage = '';
+						var originalTableId = this.tableForm.id.trim();
+						var capacity = Number(this.tableForm.capacity);
+						if (!originalTableId) {
+							this.errorMessage = '请输入餐桌编号';
+							return;
+						}
+
+						var numMatch = originalTableId.match(/(\d+)/);
+						if (!numMatch) {
+							this.errorMessage = '餐桌编号格式不正确，请按格式输入：例如 1号桌、12号桌...';
+							return;
+						}
+
+						var qrCodeId = 'a' + String(parseInt(numMatch[1], 10)).padStart(3, '0');
+
+						if (!capacity || capacity < 1 || capacity > 30) {
+							this.errorMessage = '请输入有效的容纳人数（1-30）';
+							return;
+						}
+
+						this.saving = true;
+						var statusCode = STATUS_MAP[this.tableForm.status] || 1;
+						try {
+							var url, body;
+							if (this.isEditMode) {
+								url = TABLE_API_BASE + '/edit';
+								body = JSON.stringify({
+									id: this.editingTableId,
+									tableno: originalTableId,
+									capacity: capacity,
+									status: statusCode
+								});
+							} else {
+								url = TABLE_API_BASE + '/add';
+								body = JSON.stringify({
+									tableno: originalTableId,
+									capacity: capacity,
+									status: statusCode
+								});
+							}
+							var res = await fetch(url, {
+								method: 'POST',
+								headers: window.Auth.getAuthHeaders({ 'Content-Type': 'application/json' }),
+								body: body
+							});
+							var data = await FarmAPI.parseResponse(res);
+							if (data.code !== 200) {
+								throw new Error(data.message || (this.isEditMode ? '修改失败' : '新增失败'));
+							}
+							if (!this.isEditMode) {
+								this.printTableQrCode(qrCodeId, originalTableId, capacity, data.data && data.data.qrCodeUrl);
+							} else if (this.editingTableId !== originalTableId) {
+								// 餐桌编号已修改，重新生成二维码（不用后端返回的旧图片）
+								this.printTableQrCode(qrCodeId, originalTableId, capacity, null);
+							}
+							window.location.href = 'table.html';
+						} catch (error) {
+							console.error('保存餐桌失败:', error);
+							this.errorMessage = error.message || '保存失败，请重试';
+						} finally {
+							this.saving = false;
+						}
+					},
+
+					// ====== 二维码打印 ======
+
+					buildTableScanUrl(tableId) {
+						var secret = '^mFIT!xzJ@j55QN%R^4yZ0vx';
+						var appid = 'wx986e22f241e13ba2';
+						var path = 'subpkg/order/order';
+						var query = 'tableId=' + tableId + '&secret=' + encodeURIComponent(secret);
+						return 'weixin://dl/business/?appid=' + appid + '&path=' + path + '&query=' + query;
+					},
+
+					buildQrCodeUrl(payload) {
+						return FarmAPI.qrDataURL(payload, { cellSize: 6, margin: 2 });
+					},
+
+					printTableQrCode(qrCodeId, displayName, capacity, existingQrUrl) {
+						var qrPayload = this.buildTableScanUrl(displayName || qrCodeId);
+						var qrCodeUrl = existingQrUrl || this.buildQrCodeUrl(qrPayload);
+
+						var printContent = [
+							'<!DOCTYPE html>',
+							'<html>',
+							'<head><meta charset="utf-8"><title>餐桌二维码打印 - ' + displayName + '</title>',
+							'<style>',
+							'body { margin: 0; padding: 40px; text-align: center; font-family: "Microsoft YaHei"; }',
+							'.qr-container { display: inline-block; padding: 20px; border: 1px dashed #ccc; border-radius: 10px; }',
+							'.qr-image { width: 180px; height: 180px; }',
+							'.table-info { margin-top: 15px; font-size: 18px; font-weight: bold; color: #333; }',
+							'.table-capacity { margin-top: 8px; font-size: 14px; color: #666; }',
+							'@media print { body { padding: 20px; } }',
+							'</style></head>',
+							'<body>',
+							'<div class="qr-container">',
+							'<img src="' + qrCodeUrl + '" alt="餐桌二维码" class="qr-image">',
+							'<div class="table-info">餐桌 ' + displayName + '</div>',
+							'<div class="table-capacity">可容纳 ' + capacity + ' 人</div>',
+							'</div>',
+							'</' + 'body></html>'
+						].join('');
+
+						var printWindow = window.open('', '_blank');
+						printWindow.document.write(printContent);
+						printWindow.document.close();
+						printWindow.focus();
+						setTimeout(function() { printWindow.print(); }, 500);
+					},
+
+					// ====== 取消 ======
+
+					cancel() {
+						window.location.href = 'table.html';
+					}
+				,
+
+				logout() {
+					if (confirm('确定要退出登录吗？')) {
+						if (window.Auth && typeof window.Auth.clearAuth === 'function') {
+							window.Auth.clearAuth();
+						} else {
+							localStorage.removeItem('token');
+							localStorage.removeItem('userInfo');
+						}
+						window.location.href = 'login.html';
+					}
+				}
+}
+			}).mount('#app')
+		</script>
+	</body>
+</html>

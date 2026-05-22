@@ -1,0 +1,146 @@
+<view class="container">
+  <swiper
+    class="detail-swiper"
+    indicator-dots="{{true}}"
+    autoplay="{{true}}"
+    circular="{{true}}"
+    interval="3000"
+    duration="500"
+  >
+    <!-- 有视频时第一个轮播项显示视频 -->
+    <swiper-item wx:if="{{hasVideo}}">
+      <video
+        class="detail-swiper-video"
+        src="{{goods.videoUrl}}"
+        poster="{{goods.image}}"
+        controls="true"
+        autoplay="false"
+        loop="false"
+        muted="false"
+        object-fit="cover"
+        show-center-play-btn="true"
+        enable-progress-gesture="true"
+        show-play-btn="true"
+        show-fullscreen-btn="true"
+        enable-playback-rate="true"
+        volume="1.0"
+        show-mute-btn="true"
+        show-volume-btn="true"
+      />
+    </swiper-item>
+    <block wx:for="{{swiperList}}" wx:key="id">
+      <swiper-item>
+        <image
+          class="detail-swiper-image"
+          src="{{item.image}}"
+          mode="aspectFill"
+          bindtap="previewImage"
+          data-url="{{item.image}}"
+        />
+      </swiper-item>
+    </block>
+  </swiper>
+
+  <view class="goods-info">
+    <view class="goods-price">￥{{goods.price}}</view>
+    <view class="goods-name">{{goods.name}}</view>
+    <view wx:if="{{goods.stock <= 0}}" class="stock-empty">库存不足</view>
+    <view wx:elif="{{goods.stock <= 5}}" class="stock-low">仅剩 {{goods.stock}} 件</view>
+    <view wx:else class="stock-info">还剩 {{goods.stock}} 份</view>
+   
+    <view class="goods-description">
+      <text wx:if="{{goods.spec}}" class="goods-spec">{{goods.spec}}</text>
+      <text wx:if="{{goods.description}}" class="goods-desc-text">{{goods.description}}</text>
+    </view>
+
+    <view class="delivery-info">
+      <view class="delivery-label">配送</view>
+      <view class="delivery-text">包邮</view>
+    </view>
+
+    <view class="service-info">
+      <view class="service-item">
+        <text class="service-label">服务</text>
+        <text class="service-text">称重退差价</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="spec-info" wx:if="{{!isFarmGood}}">
+    <view class="spec-title">规格信息</view>
+    <view class="spec-item">
+      <view class="spec-label">净含量</view>
+      <view class="spec-value">{{goods.weight}}</view>
+    </view>
+    <view class="spec-item">
+      <view class="spec-label">保存条件</view>
+      <view class="spec-value">{{goods.storage}}</view>
+    </view>
+  </view>
+
+  <view class="goods-detail-images" wx:if="{{goods.detailImages && goods.detailImages.length > 0}}">
+    <view class="detail-image-container">
+      <image wx:for="{{goods.detailImages}}" wx:key="*this" class="detail-image" src="{{item}}" mode="widthFix" bindtap="previewDetailImages" data-url="{{item}}" />
+    </view>
+  </view>
+
+  <!-- 立即购买弹窗 -->
+  <view class="buy-modal" hidden="{{!showBuyModal}}">
+    <view class="buy-mask" bindtap="hideBuyModal"></view>
+    <view class="buy-content">
+      <view class="buy-header">
+        <view class="buy-title">选择数量</view>
+        <view class="buy-close" bindtap="hideBuyModal">✕</view>
+      </view>
+      <view class="buy-body">
+        <view class="buy-goods-info">
+          <image class="buy-goods-image" src="{{goods.image}}" />
+          <view class="buy-goods-details">
+            <view class="buy-goods-name">{{goods.name}}</view>
+            <view class="buy-goods-price">￥{{goods.price}}</view>
+            <view class="buy-goods-quantity">
+              <view class="quantity-control">
+                <view class="quantity-btn minus" bindtap="decreaseQuantity" wx:if="{{quantity > 1}}">-</view>
+                <view class="quantity-btn minus disabled" wx:else>-</view>
+                <input
+                  class="quantity-input"
+                  type="number"
+                  value="{{quantity}}"
+                  bindinput="onQuantityInput"
+                  bindblur="onQuantityBlur"
+                  maxlength="4"
+                />
+                <view class="quantity-btn plus" bindtap="increaseQuantity">+</view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="buy-total">
+          <view class="total-label">总计</view>
+          <view class="total-price">￥{{totalPrice}}</view>
+        </view>
+      </view>
+      <view class="buy-footer">
+        <button class="buy-cancel-btn" bindtap="hideBuyModal">取消</button>
+        <button class="buy-confirm-btn" bindtap="confirmBuy">确认</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-bar">
+    <view class="cart-icon" bindtap="goToCart">
+      <text class="cart-text">🛒</text>
+      <view wx:if="{{cartCount > 0}}" class="cart-badge">{{cartCount}}</view>
+    </view>
+    <view class="btn-container">
+      <button class="add-cart-btn {{goods.stock <= 0 ? 'disabled-btn' : ''}}" bindtap="addToCart">加入购物车</button>
+      <button class="buy-btn {{goods.stock <= 0 ? 'disabled-btn' : ''}}" bindtap="buyNow">立即购买</button>
+    </view>
+  </view>
+
+  <!-- 客服按钮 -->
+  <button class="service-button function-item function-item-btn" open-type="contact">
+    <image class="service-icon" src="https://img.icons8.com/ios-glyphs/24/666666/headset.png" />
+  </button>
+</view>

@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>农场管理后台 - 菜品订单</title>
+	<script src="js/v3.2.8/vue.global.prod.js" type="text/javascript" charset="utf-8"></script>	<script src="js/api.js"></script>
+
+	<script src="js/auth.js"></script>
+
+	<style>
+
+		.order-page{
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+		}
+
+		.content-container{
+			flex: 1;
+			overflow-y: auto;
+			min-height: 0;
+			padding-right: 4px;
+			margin-bottom: 10px;
+		}
+
+		.top-nav{
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 20px;
+			padding-bottom: 10px;
+			border-bottom: 1px solid #e2e8f0;
+			flex-shrink: 0;
+		}
+
+		.btn{
+			padding: 8px 16px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 14px;
+			font-family: inherit;
+		}
+
+		.btn-warning{
+			background: #dd6b20;
+			color: white;
+		}
+
+		.btn-cancel-order{
+			background: #c9a227;
+			color: white;
+		}
+
+		.btn-complete-order{
+			background: #333;
+			color: white;
+		}
+
+		.btn-complete-order:hover{
+			background: #1f2937;
+		}
+
+		.btn-ship-order{
+			background: white;
+			color: #334155;
+			border: 1px solid #cbd5e1;
+		}
+
+		.btn-ship-order:hover{
+			background: #f8fafc;
+			border-color: #94a3b8;
+		}
+
+		.management-sections{
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+		}
+
+		.management-card{
+			background: white;
+			border-radius: 10px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+			overflow: hidden;
+		}
+
+		.management-header{
+			width: 100%;
+			border: none;
+			background: linear-gradient(90deg, #f8fafc 0%, #eef2f7 100%);
+			padding: 18px 20px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			cursor: pointer;
+			text-align: left;
+		}
+
+		.management-header:hover{
+			background: linear-gradient(90deg, #eef2f7 0%, #e2e8f0 100%);
+		}
+
+		.management-header.static-header{
+			cursor: default;
+		}
+
+		.management-header.static-header:hover{
+			background: linear-gradient(90deg, #f8fafc 0%, #eef2f7 100%);
+		}
+
+		.management-title{
+			font-size: 18px;
+			font-weight: 700;
+			color: #1f2937;
+		}
+
+		.management-meta{
+			margin-top: 6px;
+			font-size: 13px;
+			color: #64748b;
+		}
+
+		.management-arrow{
+			font-size: 13px;
+			color: #475569;
+			white-space: nowrap;
+		}
+
+		.management-body{
+			padding: 20px;
+			border-top: 1px solid #e2e8f0;
+		}
+
+		.management-toolbar{
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 16px;
+				margin-bottom: 16px;
+				flex-wrap: wrap;
+				position: sticky;
+				top: 0;
+				z-index: 6;
+				background: white;
+				padding: 16px 0;
+				box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+			}
+
+		.action-buttons{
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.search-container{
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.search-input{
+			padding: 8px 10px;
+			min-width: 260px;
+			border: 1px solid #e2e8f0;
+			border-radius: 4px;
+			font-size: 14px;
+			font-family: inherit;
+		}
+
+		.order-table-wrapper{
+			overflow-x: auto;
+			border-radius: 8px;
+		}
+
+		.order-table{
+			width: 100%;
+			min-width: 820px;
+			border-collapse: collapse;
+			background: white;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+		}
+
+		.order-table th,
+		.order-table td{
+			padding: 12px;
+			text-align: left;
+			border-bottom: 1px solid #e2e8f0;
+			vertical-align: top;
+		}
+
+		.order-table th{
+			background: #f7fafc;
+			font-weight: 600;
+		}
+
+		.status-tag{
+			padding: 4px 8px;
+			border-radius: 4px;
+			font-size: 12px;
+			font-weight: 500;
+			display: inline-flex;
+			align-items: center;
+		}
+
+		.status-tag.paid{
+			background: #c6f6d5;
+			color: #22543d;
+		}
+
+		.status-tag.unpaid{
+			background: #fed7d7;
+			color: #742a2a;
+		}
+
+		.status-tag.processing{
+			background: #feebc8;
+			color: #744210;
+		}
+
+		.status-tag.completed{
+			background: #c6f6d5;
+			color: #22543d;
+		}
+
+		.status-tag.refunded{
+			background: #fee2e2;
+			color: #b91c1c;
+		}
+
+		.status-tag.pending{
+			background: #e2e8f0;
+			color: #4a5568;
+		}
+
+		.view-details{
+			color: #586b84;
+			cursor: pointer;
+			text-decoration: underline;
+		}
+
+		.view-details:hover{
+			color: #3f5775;
+		}
+
+		.row-actions{
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.action-panel{
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			padding: 10px 12px;
+			border-radius: 12px;
+			border: 1px solid #e2e8f0;
+			background: #f8fafc;
+		}
+
+		.row-action-buttons{
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 8px;
+		}
+
+		.btn-inline{
+			padding: 6px 10px;
+			font-size: 12px;
+			line-height: 1.4;
+		}
+
+		.row-action-buttons .btn-inline{
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			min-height: 32px;
+		}
+
+		.row-action-links{
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			align-items: center;
+		}
+
+		.action-link{
+			padding: 0;
+			border: none;
+			background: none;
+			color: #586b84;
+			cursor: pointer;
+			text-decoration: underline;
+			font-size: 12px;
+			line-height: 1.5;
+		}
+
+		.action-link:hover{
+			color: #3f5775;
+		}
+
+		.row-action-links .view-details{
+			font-size: 12px;
+			line-height: 1.5;
+		}
+
+		.cell-main{
+			font-size: 14px;
+			font-weight: 600;
+			line-height: 1.6;
+			color: #1f2937;
+			word-break: break-word;
+		}
+
+		.cell-sub{
+			display: block;
+			margin-top: 4px;
+			font-size: 12px;
+			line-height: 1.6;
+			color: #64748b;
+			word-break: break-word;
+		}
+
+		.amount-main{
+			color: #dc2626;
+			font-weight: 700;
+		}
+
+		.status-stack{
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+			align-items: flex-start;
+		}
+
+		.cell-note{
+			display: block;
+			margin-top: 4px;
+			font-size: 12px;
+			color: #718096;
+			line-height: 1.5;
+		}
+
+		.empty-state{
+			padding: 36px 16px;
+			text-align: center;
+			font-size: 14px;
+			color: #718096;
+			background: #f8fafc;
+			border-radius: 8px;
+		}
+
+		.modal-mask{
+			position: fixed;
+			inset: 0;
+			background: rgba(15, 23, 42, 0.48);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 24px;
+			z-index: 1000;
+		}
+
+		.modal-dialog{
+			width: min(520px, 100%);
+			max-height: calc(100vh - 48px);
+			background: white;
+			border-radius: 22px;
+			box-shadow: 0 24px 64px rgba(15, 23, 42, 0.2);
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+
+		.modal-dialog.confirm-dialog{
+			width: min(440px, 100%);
+		}
+
+		.modal-dialog.info-dialog{
+			width: min(620px, 100%);
+		}
+
+		.modal-header{
+			padding: 20px 24px;
+			border-bottom: 1px solid #edf2f7;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 16px;
+		}
+
+		.modal-title{
+			font-size: 20px;
+			font-weight: 700;
+			color: #0f172a;
+		}
+
+		.modal-close{
+			width: 36px;
+			height: 36px;
+			border: none;
+			border-radius: 50%;
+			background: #f1f5f9;
+			color: #475569;
+			cursor: pointer;
+			font-size: 18px;
+			line-height: 1;
+		}
+
+		.modal-body{
+			flex: 1;
+			overflow: auto;
+			padding: 24px;
+		}
+
+		.modal-actions{
+			display: flex;
+			justify-content: flex-end;
+			gap: 10px;
+			padding: 0 24px 24px;
+		}
+
+		.confirm-text{
+			font-size: 15px;
+			line-height: 1.8;
+			color: #334155;
+		}
+
+		.form-grid{
+			display: grid;
+			gap: 16px;
+		}
+
+		.form-field{
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.form-label{
+			font-size: 13px;
+			font-weight: 600;
+			color: #334155;
+		}
+
+		.form-input,
+		.form-textarea{
+			width: 100%;
+			border: 1px solid #dbe2ea;
+			border-radius: 10px;
+			padding: 10px 12px;
+			font-size: 14px;
+			font-family: inherit;
+			color: #1f2937;
+			background: #fff;
+		}
+
+		.form-input{
+			height: 42px;
+		}
+
+		.form-inline-group{
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.form-inline-group .form-input{
+			flex: 1;
+		}
+
+		.form-textarea{
+			min-height: 120px;
+			line-height: 1.7;
+			resize: vertical;
+		}
+
+		.form-tip{
+			font-size: 12px;
+			line-height: 1.6;
+			color: #64748b;
+		}
+
+		.refund-proof-input{
+			width: 100%;
+			font-size: 13px;
+			color: #475569;
+		}
+
+		.refund-proof-grid{
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 12px;
+			margin-top: 4px;
+		}
+
+		.refund-proof-card{
+			position: relative;
+			border-radius: 14px;
+			overflow: hidden;
+			border: 1px solid #e2e8f0;
+			background: #f8fafc;
+		}
+
+		.refund-proof-image{
+			display: block;
+			width: 100%;
+			aspect-ratio: 1 / 1;
+			object-fit: cover;
+			background: #f1f5f9;
+		}
+
+		.refund-proof-remove{
+			position: absolute;
+			right: 8px;
+			bottom: 8px;
+			padding: 4px 8px;
+			border: none;
+			border-radius: 999px;
+			background: rgba(15, 23, 42, 0.78);
+			color: #fff;
+			font-size: 12px;
+			cursor: pointer;
+		}
+
+		.refund-proof-link{
+			display: block;
+			text-decoration: none;
+		}
+
+		.refund-proof-empty{
+			padding: 18px 14px;
+			border-radius: 12px;
+			border: 1px dashed #cbd5e1;
+			background: #f8fafc;
+			color: #64748b;
+			font-size: 13px;
+			line-height: 1.6;
+			text-align: center;
+		}
+
+		.form-error{
+			margin-top: 12px;
+			padding: 10px 12px;
+			border-radius: 10px;
+			background: #fff1f2;
+			color: #b42318;
+			font-size: 13px;
+			line-height: 1.6;
+		}
+
+		.info-grid{
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 16px 18px;
+		}
+
+		.info-item{
+			padding: 14px 16px;
+			border-radius: 14px;
+			background: #f8fafc;
+			border: 1px solid #e2e8f0;
+		}
+
+		.info-item.full{
+			grid-column: 1 / -1;
+		}
+
+		.info-label{
+			font-size: 12px;
+			color: #64748b;
+			margin-bottom: 6px;
+		}
+
+		.info-value{
+			font-size: 14px;
+			line-height: 1.7;
+			color: #0f172a;
+			white-space: pre-line;
+			word-break: break-word;
+		}
+
+		.page-jump-input{
+			width: 60px;
+			padding: 5px;
+			border: 1px solid #e2e8f0;
+			border-radius: 4px;
+			text-align: center;
+			font-size: 14px;
+		}
+
+		@media (max-width: 1024px){
+			.management-toolbar{
+				flex-direction: column;
+				align-items: stretch;
+			}
+
+			.search-input{
+				min-width: 0;
+				width: 100%;
+			}
+
+			.info-grid{
+				grid-template-columns: 1fr;
+			}
+
+			.refund-proof-grid{
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+
+			.modal-mask{
+				padding: 16px;
+			}
+
+			.modal-header,
+			.modal-body{
+				padding: 18px;
+			}
+
+			.modal-actions{
+				padding: 0 18px 18px;
+				flex-wrap: wrap;
+			}
+
+			.row-action-buttons{
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
+	<link rel="stylesheet" href="css/admin-base.css" />
+	<link rel="stylesheet" href="css/admin-components.css" />
+	<link rel="stylesheet" href="css/admin-pagination.css" />
+	<script src="js/admin-utils.js"></script>
+	</head>
+<body>
+	<div id="app">
+		<div class="main-container">
+			<aside class="sidebar">
+				<div class="sidebar-header">农场管理后台</div>
+				<ul class="sidebar-menu">
+					<li @click="navigateTo('product.html')">产品管理</li>
+					<li class="active" @click="navigateTo('order.html')">订单管理</li>
+					<li @click="navigateTo('dish.html')">点餐管理</li>
+					<li @click="navigateTo('coupon.html')">活动券管理</li>
+					<li @click="navigateTo('user.html')">用户管理</li>
+				</ul>
+			</aside>
+
+			<main class="content">
+				<header class="top-nav">
+					<div>农场管理后台-菜品订单</div>
+					<div class="user-info">
+						<div class="user-avatar">用</div>
+						<div class="user-info-row">
+							<div>用户12312</div>
+							<button class="btn-logout" @click="logout">退出登录</button>
+						</div>
+					</div>
+				</header>
+
+				<div class="order-page">
+					<div class="content-container">
+						<section class="management-card">
+							<div class="management-header static-header">
+								<div>
+									<div class="management-title">菜品订单</div>
+								</div>
+							</div>
+							<div class="management-body">
+								<div class="management-toolbar">
+									<div class="action-buttons">
+										<button class="btn btn-default" @click="refreshDishOrders">刷新数据</button>
+									</div>
+									<div class="search-container">
+										<input
+											type="text"
+											class="search-input"
+											v-model.trim="dishSearchKeyword"
+											placeholder="订单ID/餐桌号搜索"
+											@keyup.enter="searchDishOrders"
+										/>
+										<button class="btn btn-primary" @click="searchDishOrders">搜索</button>
+									</div>
+								</div>
+								<div v-if="dishListError" style="margin-bottom: 12px; color: #9a3412; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 8px 10px;">
+									{{ dishListError }}
+								</div>
+
+								<div class="order-table-wrapper" v-if="dishOrders.length > 0">
+									<table class="order-table">
+										<thead>
+											<tr>
+												<th>订单ID</th>
+												<th>餐桌号</th>
+												<th>订单状态</th>
+												<th>操作</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr v-for="order in dishOrders" :key="order.orderId">
+												<td>{{ order.orderId }}</td>
+												<td>{{ order.tableNo }}</td>
+												<td>
+													<span :class="['status-tag', getDishOrderStatusClass(order.orderStatus)]">{{ order.orderStatus }}</span>
+												</td>
+												<td>
+													<a :href="'order-dish-detail.html?orderNo=' + order.orderId + '&phone=' + order.contactPhone" class="view-details">查看详情</a>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+								<div class="empty-state" v-else>暂无符合条件的菜品订单</div>
+							</div>
+						</section>
+					</div>
+					<div class="pagination" v-if="dishTotalOrders > 0">
+						<div style="display: flex; align-items: center; gap: 5px;">
+							<span>每页</span>
+							<select v-model.number="dishPageSize" @change="changeDishPageSize" style="width: 72px; padding: 5px 8px; border: 1px solid #e2e8f0; border-radius: 4px;">
+								<option v-for="size in dishPageSizeOptions" :key="'dish-page-size-' + size" :value="size">{{ size }}</option>
+							</select>
+							<span>条</span>
+						</div>
+						<span class="pagination-info">共 {{ dishTotalOrders }} 条，第 {{ dishCurrentPage }}/{{ dishTotalPages }} 页</span>
+						<button class="pagination-btn" @click="changeDishPage(dishCurrentPage - 1)" :disabled="dishCurrentPage === 1">上一页</button>
+						<button class="pagination-btn" @click="changeDishPage(dishCurrentPage + 1)" :disabled="dishCurrentPage === dishTotalPages">下一页</button>
+						<div style="display: flex; align-items: center; gap: 5px;">
+							<span>跳转到</span>
+							<input type="number" class="page-jump-input" v-model.number="dishJumpPage" min="1" :max="dishTotalPages" />
+							<button class="pagination-btn" @click="jumpDishToPage">跳转</button>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+
+	</div>
+
+	<script>
+		const { createApp } = Vue;
+		const DISH_ORDER_LIST_API = FarmAPI.url('/api/dish/order/list');
+
+		createApp({
+			data() {
+				return {
+					urlParams: {
+						orderNo: '',
+						phone: ''
+					},
+					allDishOrders: [],
+					dishOrders: [],
+					dishSearchKeyword: '',
+					dishListError: '',
+					dishCurrentPage: 1,
+					dishPageSize: 15,
+					dishPageSizeOptions: [5, 10, 15],
+					dishTotalPages: 1,
+					dishTotalOrders: 0,
+					dishJumpPage: 1,
+
+					dishSectionOpen: true,
+				};
+			},
+
+			mounted() {
+				if (window.Auth && typeof window.Auth.requireAuth === 'function') {
+					window.Auth.requireAuth();
+					if (typeof window.Auth.updateHeaderUserInfo === 'function') {
+						window.Auth.updateHeaderUserInfo();
+					}
+				}
+
+				this.loadUrlParams();
+					this.loadDishOrders(1);
+			},
+
+			computed: {
+				pendingKitchenDishOrders() {
+					return this.allDishOrders.filter(order => order.kitchenStatus === '待出餐' || order.kitchenStatus === '待接单').length;
+				},
+
+
+
+
+			},
+
+			methods: {
+				loadUrlParams() {
+					const urlParams = new URLSearchParams(window.location.search);
+					this.urlParams.orderNo = urlParams.get('orderNo') || '';
+					this.urlParams.phone = urlParams.get('phone') || '';
+					console.log('URL参数:', this.urlParams);
+				},
+
+				formatAmount(value) {
+					const amount = Number(value);
+					if (!Number.isFinite(amount)) {
+						return '0.00';
+					}
+					return amount.toFixed(2);
+				},
+
+				formatDisplayTime(value) {
+					if (!value) {
+						return '';
+					}
+
+					const text = String(value).trim().replace(/\s*日\//g, ' ');
+					const match = text.match(/(\d{4})[-\/年](\d{1,2})[-\/月](\d{1,2})(?:日)?\s+(\d{1,2})[:：](\d{1,2})/);
+					if (!match) {
+						return text;
+					}
+
+					const pad = item => String(item).padStart(2, '0');
+					return `${match[1]}-${pad(match[2])}-${pad(match[3])} ${pad(match[4])}:${pad(match[5])}`;
+				},
+
+				getPaymentStatusClass(status) {
+					if (status === '已支付') return 'paid';
+					if (status === '待支付') return 'unpaid';
+					if (status === '已退款') return 'refunded';
+					return 'pending';
+				},
+
+				getDishKitchenStatusClass(status) {
+					if (status === '已出餐') return 'completed';
+					if (status === '待出餐' || status === '待接单') return 'processing';
+					if (status === '已取消') return 'refunded';
+					return 'pending';
+				},
+
+				getDishOrderStatusClass(status) {
+					if (status === '已完成') return 'completed';
+					if (status === '待支付') return 'unpaid';
+					if (status === '备餐中') return 'processing';
+					if (status === '已取消') return 'refunded';
+					return 'pending';
+				},
+
+				getProductOrderStatusClass(status) {
+					if (status === '已完成') return 'completed';
+					if (status === '待支付') return 'unpaid';
+					if (status === '待发货' || status === '待收货' || status === '退款中') return 'processing';
+					return 'pending';
+				},
+
+				formatOperationTime(value = new Date()) {
+					const year = value.getFullYear();
+					const month = String(value.getMonth() + 1).padStart(2, '0');
+					const day = String(value.getDate()).padStart(2, '0');
+					const hour = String(value.getHours()).padStart(2, '0');
+					const minute = String(value.getMinutes()).padStart(2, '0');
+					return `${year}-${month}-${day} ${hour}:${minute}`;
+				},
+
+
+
+
+
+
+
+				buildRefundProofPlaceholder(label, accentColor = '#f59e0b') {
+					const safeLabel = String(label || '退款证明');
+					const svg = `
+						<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320">
+							<rect width="320" height="320" fill="#fff7ed"/>
+							<rect x="18" y="18" width="284" height="284" rx="24" fill="#ffffff" stroke="${accentColor}" stroke-width="4"/>
+							<circle cx="86" cy="96" r="30" fill="${accentColor}" opacity="0.2"/>
+							<rect x="132" y="76" width="116" height="18" rx="9" fill="${accentColor}" opacity="0.72"/>
+							<rect x="132" y="110" width="84" height="12" rx="6" fill="#cbd5e1"/>
+							<rect x="40" y="172" width="240" height="20" rx="10" fill="#e2e8f0"/>
+							<rect x="40" y="206" width="190" height="16" rx="8" fill="#e2e8f0"/>
+							<text x="160" y="266" text-anchor="middle" font-size="24" fill="#475569" font-family="Microsoft YaHei, Arial">${safeLabel}</text>
+						</svg>
+					`.trim();
+					return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+				},
+
+
+				readFileAsDataUrl(file) {
+					return new Promise((resolve, reject) => {
+						const reader = new FileReader();
+						reader.onload = () => resolve(String(reader.result || ''));
+						reader.onerror = () => reject(new Error('图片读取失败'));
+						reader.readAsDataURL(file);
+					});
+				},
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				navigateTo(page) {
+					window.location.href = page;
+				},
+
+				toggleSection(section) {
+					if (section === 'dish') {
+						this.dishSectionOpen = !this.dishSectionOpen;
+					}
+				},
+
+
+				createDishOrderRecords(source) {
+					return (Array.isArray(source) ? source : []).map((order, index) => this.normalizeDishOrder(order, index));
+				},
+
+
+				normalizeDishOrder(order, index = 0) {
+					const orderInfo = order.order && typeof order.order === 'object' ? order.order : {};
+					const orderId = order.orderId || order.orderNo || order.id || order.dishOrderId || orderInfo.orderId || orderInfo.orderNo || orderInfo.id || `DISH${index + 1}`;
+					const paymentStatus = order.paymentStatus || order.payStatus || orderInfo.paymentStatus || orderInfo.payStatus || '';
+					return {
+						...orderInfo,
+						...order,
+						orderId,
+						customerWechat: order.customerWechat || order.wechat || order.nickname || orderInfo.customerWechat || orderInfo.wechat || '',
+						contactPhone: order.contactPhone || order.phone || order.mobile || orderInfo.contactPhone || orderInfo.phone || '',
+						tableNo: order.tableNo || order.tableId || order.tableName || orderInfo.tableNo || orderInfo.tableId || '',
+						dishCount: Number(order.dishCount ?? order.itemCount ?? order.totalCount ?? orderInfo.dishCount ?? 0) || 0,
+						actualAmount: Number(order.actualAmount ?? order.amount ?? order.totalAmount ?? order.payAmount ?? orderInfo.actualAmount ?? 0) || 0,
+						paymentMethod: order.paymentMethod || order.payMethod || orderInfo.paymentMethod || '微信支付',
+						paymentStatus: paymentStatus || '待支付',
+						orderStatus: order.orderStatus || order.status || orderInfo.orderStatus || orderInfo.status || (paymentStatus === '待支付' ? '待支付' : '备餐中'),
+						kitchenStatus: order.kitchenStatus || order.cookStatus || order.mealStatus || orderInfo.kitchenStatus || '',
+						orderTime: this.formatDisplayTime(order.orderTime || order.createTime || order.createdTime || order.createdAt || orderInfo.orderTime || '')
+					};
+				},
+
+				getDishOrderListPayload(data) {
+					const pageData = data && typeof data === 'object' && !Array.isArray(data)
+						? (data.data || data)
+						: data;
+					const records = Array.isArray(pageData?.records)
+						? pageData.records
+						: (Array.isArray(pageData?.list)
+							? pageData.list
+							: (Array.isArray(pageData?.rows)
+								? pageData.rows
+								: (Array.isArray(pageData) ? pageData : [])));
+					return {
+						records,
+						total: Number(pageData?.total ?? pageData?.count ?? records.length) || 0,
+						pages: Number(pageData?.pages ?? pageData?.totalPages) || 0,
+						pageNum: Number(pageData?.pageNum ?? pageData?.currentPage) || 0
+					};
+				},
+
+				isSuccessResponse(data) {
+					const codeText = String(data?.code ?? '').toLowerCase();
+					const message = String(data?.message || data?.msg || '').trim().toLowerCase();
+					return data?.code == null
+						|| Number(data.code) === 200
+						|| Number(data.code) === 0
+						|| codeText === 'success'
+						|| data?.success === true
+						|| message === 'success'
+						|| message.includes('成功');
+				},
+
+				getErrorMessage(data, fallback) {
+					const message = String(data?.message || data?.msg || '').trim();
+					if (!message || /^success$/i.test(message) || message.includes('成功')) {
+						return fallback;
+					}
+					return message;
+				},
+
+				async loadDishOrders(pageNum = 1) {
+					this.dishListError = '';
+					const params = new URLSearchParams();
+					params.set('pageNum', String(pageNum));
+					params.set('pageSize', String(this.dishPageSize));
+					const keyword = String(this.dishSearchKeyword || '').trim();
+					if (keyword) {
+						params.set('keyword', keyword);
+					}
+					console.log('菜品订单查询参数:', Object.fromEntries(params.entries()));
+
+					try {
+						const response = await fetch(`${DISH_ORDER_LIST_API}?${params.toString()}`, {
+							headers: window.Auth.getAuthHeaders()
+						});
+						const data = await FarmAPI.parseResponse(response);
+						const pageData = this.getDishOrderListPayload(data);
+						const success = this.isSuccessResponse(data);
+
+						if (!response.ok || (!success && pageData.records.length === 0)) {
+							this.dishListError = this.getErrorMessage(data, '获取菜品订单失败');
+							this.allDishOrders = [];
+							this.dishOrders = [];
+							this.dishTotalOrders = 0;
+							this.dishTotalPages = 1;
+							this.dishCurrentPage = 1;
+							this.dishJumpPage = 1;
+							return;
+						}
+
+						const orders = this.createDishOrderRecords(pageData.records);
+						this.allDishOrders = orders;
+						this.dishOrders = orders;
+						this.dishTotalOrders = Number(pageData.total) || orders.length;
+						this.dishTotalPages = Math.max(Number(pageData.pages) || Math.ceil(this.dishTotalOrders / this.dishPageSize) || 1, 1);
+						this.dishCurrentPage = Number(pageData.pageNum) || pageNum;
+						this.dishJumpPage = this.dishCurrentPage;
+						console.log('菜品订单列表请求成功:', {
+							total: this.dishTotalOrders,
+							pageNum: this.dishCurrentPage,
+							pageSize: this.dishPageSize,
+							keyword,
+							records: orders
+						});
+					} catch (error) {
+						console.error('获取菜品订单失败:', error);
+						this.dishListError = '网络错误，请重试';
+						this.allDishOrders = [];
+						this.dishOrders = [];
+						this.dishTotalOrders = 0;
+						this.dishTotalPages = 1;
+						this.dishCurrentPage = 1;
+						this.dishJumpPage = 1;
+					}
+				},
+
+
+				filterDishOrders() {
+					const keyword = this.dishSearchKeyword.trim().toLowerCase();
+					if (!keyword) {
+						return this.allDishOrders;
+					}
+
+					return this.allDishOrders.filter(order =>
+						String(order.orderId).toLowerCase().includes(keyword) ||
+						String(order.customerWechat).toLowerCase().includes(keyword) ||
+						String(order.tableNo).toLowerCase().includes(keyword)
+					);
+				},
+
+
+				updateDishOrders() {
+					const filteredOrders = this.filterDishOrders();
+					this.dishTotalOrders = filteredOrders.length;
+					this.dishTotalPages = Math.ceil(this.dishTotalOrders / this.dishPageSize) || 1;
+					if (this.dishCurrentPage > this.dishTotalPages) {
+						this.dishCurrentPage = this.dishTotalPages;
+					}
+					const startIndex = (this.dishCurrentPage - 1) * this.dishPageSize;
+					const endIndex = startIndex + this.dishPageSize;
+					this.dishOrders = filteredOrders.slice(startIndex, endIndex);
+					this.dishJumpPage = this.dishCurrentPage;
+				},
+
+
+				searchDishOrders() {
+					this.loadDishOrders(1);
+				},
+
+
+				refreshDishOrders() {
+					this.dishSearchKeyword = '';
+					this.dishCurrentPage = 1;
+					this.loadDishOrders(1);
+				},
+
+
+				changeDishPage(page) {
+					if (page >= 1 && page <= this.dishTotalPages) {
+						this.loadDishOrders(page);
+					}
+				},
+
+				changeDishPageSize() {
+					this.dishCurrentPage = 1;
+					this.dishJumpPage = 1;
+					this.loadDishOrders(1);
+				},
+
+
+				jumpDishToPage() {
+					if (this.dishJumpPage >= 1 && this.dishJumpPage <= this.dishTotalPages) {
+						this.loadDishOrders(this.dishJumpPage);
+						return;
+					}
+					alert('请输入有效的菜品订单页码');
+				},
+
+				logout() {
+					if (confirm('确定要退出登录吗？')) {
+						if (window.Auth && typeof window.Auth.clearAuth === 'function') {
+							window.Auth.clearAuth();
+						} else {
+							localStorage.removeItem('token');
+							localStorage.removeItem('userInfo');
+						}
+						window.location.href = 'login.html';
+					}
+				}
+}
+		}).mount('#app');
+	</script>
+</body>
+</html>

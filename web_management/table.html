@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>农场管理后台 - 餐桌管理</title>
+		<script src="js/v3.2.8/vue.global.prod.js" type="text/javascript" charset="utf-8"></script>	<script src="js/api.js"></script>
+		<script src="js/qrcode-generator.js"></script>
+
+		<script src="js/auth.js"></script>
+
+		<link rel="stylesheet" href="css/admin-base.css" />
+	<link rel="stylesheet" href="css/admin-components.css" />
+	<link rel="stylesheet" href="css/admin-pagination.css" />
+	<link rel="stylesheet" href="css/admin-modal.css" />
+	<script src="js/admin-utils.js"></script>
+	<script src="js/admin-pagination.js"></script>
+	<script src="js/admin-modal.js"></script>
+	</head>
+
+	<style>
+
+		.dish-page {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+		}
+
+		.content-container{
+			flex: 1;
+			overflow-y: auto;
+			min-height: 0;
+			margin-bottom: 10px;
+		}
+
+		.action-buttons{
+			margin-bottom: 20px;
+		}
+
+		.btn-rice{
+			background: #f3ecdf;
+			color: #8a6b2f;
+		}
+
+		.btn-danger{
+			background: linear-gradient(90deg, #d8b14b 0%, #e8c96f 100%);
+			color: white;
+		}
+
+		.dish-table{
+			width: 100%;
+			border-collapse: collapse;
+			background: white;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+
+		.dish-table th,
+		.dish-table td{
+			padding: 12px;
+			text-align: left;
+			border-bottom: 1px solid #e2e8f0;
+		}
+
+		.dish-table th{
+			background: #f7fafc;
+			font-weight: 600;
+		}
+
+		.dish-image{
+			width: 60px;
+			height: 60px;
+			object-fit: cover;
+		}
+
+		.modal-warning{
+			color: #d3a239;
+			font-weight: 500;
+		}
+
+		.table-actions{
+			display: flex;
+			gap: 5px;
+		}
+
+		.table-actions .btn{
+			padding: 2px 8px;
+			font-size: 12px;
+			margin-right: 0;
+		}
+
+		.table-status-select{
+			min-width: 92px;
+			padding: 4px 8px;
+			border: 1px solid #cbd5e0;
+			border-radius: 4px;
+			background: #fff;
+			color: #334155;
+			font-size: 12px;
+			outline: none;
+		}
+
+		.table-status-select:focus{
+			border-color: #3182ce;
+			box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.12);
+		}
+
+		.management-sections{
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+		}
+
+		.management-card{
+			background: white;
+			border-radius: 10px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+			overflow: hidden;
+		}
+
+		.management-header{
+			width: 100%;
+			border: none;
+			background: linear-gradient(90deg, #f8fafc 0%, #eef2f7 100%);
+			padding: 18px 20px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			cursor: pointer;
+			text-align: left;
+		}
+
+		.management-header:hover{
+			background: linear-gradient(90deg, #eef2f7 0%, #e2e8f0 100%);
+		}
+
+		.management-header.static-header{
+			cursor: default;
+		}
+
+		.management-header.static-header:hover{
+			background: linear-gradient(90deg, #f8fafc 0%, #eef2f7 100%);
+		}
+
+		.management-title{
+			font-size: 18px;
+			font-weight: 700;
+			color: #1f2937;
+		}
+
+		.management-meta{
+			margin-top: 6px;
+			font-size: 13px;
+			color: #64748b;
+		}
+
+		.management-arrow{
+			font-size: 13px;
+			color: #475569;
+			white-space: nowrap;
+		}
+
+		.management-body{
+			padding: 20px;
+			border-top: 1px solid #e2e8f0;
+		}
+
+		.manage-table{
+			width: 100%;
+			border-collapse: collapse;
+			background: white;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+		}
+
+		.manage-table th,
+		.manage-table td{
+			padding: 12px;
+			text-align: left;
+			border-bottom: 1px solid #e2e8f0;
+		}
+
+		.manage-table th{
+			background: #f7fafc;
+			font-weight: 600;
+		}
+
+		.table-status{
+			padding: 4px 8px;
+			border-radius: 999px;
+			font-size: 12px;
+			font-weight: 600;
+			display: inline-flex;
+			align-items: center;
+		}
+
+		.table-status.free{
+			background: #dcfce7;
+			color: #166534;
+		}
+
+		.table-status.busy{
+			background: #f6edc3;
+			color: #9a7618;
+		}
+
+		.table-status.offline{
+			background: #d3a239;
+			color: #fffdf8;
+		}
+
+		.table-chip{
+			display: inline-flex;
+			align-items: center;
+			padding: 4px 8px;
+			border-radius: 999px;
+			background: #f1f5f9;
+			color: #334155;
+			font-size: 12px;
+			font-weight: 500;
+		}
+
+		.detail-modal{
+			max-width: 760px;
+		}
+
+		.detail-modal .modal-header{
+			background: #faf4dd;
+			border-bottom: 1px solid #ead8a4;
+		}
+
+		.detail-modal .modal-body{
+			background: #fffdf6;
+		}
+
+		.detail-layout{
+			display: grid;
+			grid-template-columns: minmax(0, 1.2fr) minmax(220px, 280px);
+			gap: 24px;
+			align-items: start;
+		}
+
+		.detail-grid{
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 14px;
+		}
+
+		.detail-item{
+			padding: 12px 14px;
+			background: #faf4dd;
+			border-radius: 8px;
+			border: 1px solid #ead8a4;
+		}
+
+		.detail-label{
+			display: block;
+			margin-bottom: 6px;
+			font-size: 12px;
+			font-weight: 600;
+			color: #9a7618;
+		}
+
+		.detail-content{
+			color: #1f2937;
+			line-height: 1.6;
+			word-break: break-word;
+		}
+
+		.qr-panel{
+			padding: 16px;
+			border-radius: 10px;
+			background: linear-gradient(180deg, #faf4dd 0%, #f5ebc4 100%);
+			border: 1px solid #ead8a4;
+			text-align: center;
+		}
+
+		.qr-image{
+			width: 220px;
+			height: 220px;
+			max-width: 100%;
+			border-radius: 10px;
+			background: white;
+			border: 1px solid #ead8a4;
+			padding: 10px;
+			object-fit: contain;
+		}
+
+		.qr-tip{
+			margin-top: 12px;
+			font-size: 12px;
+			color: #8a7458;
+			line-height: 1.6;
+			word-break: break-all;
+		}
+
+		.qr-link{
+			color: #166534;
+			text-decoration: none;
+			font-weight: 600;
+		}
+
+		.qr-link:hover{
+			text-decoration: underline;
+		}
+
+		.qr-warning{
+			color: #b45309;
+		}
+
+		.management-toolbar{
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 16px;
+			flex-wrap: wrap;
+			margin-bottom: 20px;
+			position: sticky;
+			top: 0;
+			z-index: 6;
+			background: white;
+			padding-bottom: 12px;
+			box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+		}
+
+		.search-container{
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+
+		.search-input{
+			padding: 8px 12px;
+			min-width: 250px;
+			border: 1px solid #dbe2ea;
+			border-radius: 6px;
+			outline: none;
+		}
+
+		.search-input:focus{
+			border-color: #3182ce;
+			box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.12);
+		}
+
+		.filter-select{
+			padding: 8px 12px;
+			min-width: 120px;
+			border: 1px solid #dbe2ea;
+			border-radius: 6px;
+			outline: none;
+			background: #fff;
+			font-size: 14px;
+			color: #334155;
+		}
+
+		.filter-select:focus{
+			border-color: #3182ce;
+			box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.12);
+		}
+
+		.empty-state{
+			padding: 32px 16px;
+			text-align: center;
+			color: #64748b;
+			background: #f8fafc;
+			border: 1px dashed #cbd5e1;
+			border-radius: 8px;
+		}
+
+		@media (max-width: 768px){
+			.detail-layout{
+				grid-template-columns: 1fr;
+			}
+
+			.detail-grid{
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
+
+	<body>
+		<div id="app">
+			<div class="main-container">
+				<aside class="sidebar">
+					<div class="sidebar-header">农场管理后台</div>
+					<ul class="sidebar-menu">
+						<li @click="navigateTo('product.html')">产品管理</li>
+						<li @click="navigateTo('order.html')">订单管理</li>
+						<li class="active" @click="navigateTo('dish.html')">点餐管理</li>
+						<li @click="navigateTo('coupon.html')">活动券管理</li>
+						<li @click="navigateTo('user.html')">用户管理</li>
+					</ul>
+				</aside>
+
+				<main class="content">
+					<header class="top-nav">
+						<div>农场管理后台-餐桌管理</div>
+						<div class="user-info">
+						<div class="user-avatar">用</div>
+						<div class="user-info-row">
+							<div>用户12312</div>
+							<button class="btn-logout" @click="logout">退出登录</button>
+						</div>
+					</div>
+					</header>
+
+					<div class="dish-page">
+						<div class="content-container">
+							<section class="management-card">
+								<div class="management-header static-header">
+									<div>
+										<div class="management-title">餐桌管理</div>
+									</div>
+								</div>
+								<div class="management-body">
+									<div class="management-toolbar">
+										<div class="action-buttons">
+											<button class="btn btn-success" @click="addTable">新增餐桌</button>
+											<button class="btn btn-danger" @click="openTableDeleteModal()" :disabled="selectedTables.length === 0">删除餐桌</button>
+											<button class="btn btn-default" @click="refreshTableData">刷新数据</button>
+										</div>
+										<div class="search-container">
+											<input type="text" v-model.trim="tableSearchKeyword" class="search-input" placeholder="餐桌编号搜索" @keyup.enter="searchTables" />
+											<select class="filter-select" v-model="tableStatusFilter" @change="searchTables">
+												<option value="">全部状态</option>
+												<option value="空闲">空闲</option>
+												<option value="使用中">使用中</option>
+												<option value="停用">停用</option>
+											</select>
+											<button class="btn btn-primary" @click="searchTables">搜索</button>
+										</div>
+										<div v-if="tableListError" style="margin-top: 10px; color: #dc2626; font-size: 14px;">{{ tableListError }}</div>
+									</div>
+									<table class="manage-table" v-if="tables.length > 0">
+										<thead>
+											<tr>
+												<th><input type="checkbox" v-model="tableSelectAll" @change="toggleSelectAllTables" /></th>
+												<th>餐桌编号</th>
+												<th>容纳人数</th>
+												<th>状态</th>
+												<th>创建时间</th>
+												<th>操作</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr v-for="table in tables" :key="table.id">
+												<td><input type="checkbox" v-model="table.selected" @change="updateSelectedTable" /></td>
+												<td>{{ table.id }}</td>
+												<td>{{ table.capacity }} 人</td>
+												<td><span :class="['table-status', getTableStatusClass(table.status)]">{{ table.status }}</span></td>
+												<td>{{ table.createTime }}</td>
+												<td>
+													<div class="table-actions">
+														<button class="btn btn-primary" @click="editTable(table)">编辑</button>
+														<button class="btn btn-rice" @click="openTableInfo(table)">查看明细</button>
+														<select class="table-status-select" :value="table.status" @change="updateTableStatus(table, $event.target.value)">
+															<option value="空闲">空闲</option>
+															<option value="使用中">使用中</option>
+															<option value="停用">停用</option>
+														</select>
+														<button class="btn btn-danger" @click="openTableDeleteModal(table)">删除</button>
+													</div>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+									<div class="empty-state" v-else>暂无符合条件的餐桌数据</div>
+								</div>
+							</section>
+						</div>
+						<div class="pagination" v-if="tableTotalTables > 0">
+							<div style="display: flex; align-items: center; gap: 5px;">
+								<span>每页</span>
+								<select v-model.number="tablePageSize" @change="changeTablePageSize" style="padding: 5px 8px; border: 1px solid #e2e8f0; border-radius: 4px;">
+									<option v-for="size in tablePageSizeOptions" :key="'table-page-size-' + size" :value="size">{{ size }}</option>
+								</select>
+								<span>条</span>
+							</div>
+							<span class="pagination-info">共 {{ tableTotalTables }} 条，第 {{ tableCurrentPage }}/{{ tableTotalPages }} 页</span>
+							<button class="pagination-btn" @click="changeTablePage(tableCurrentPage - 1)" :disabled="tableCurrentPage === 1">上一页</button>
+							<button class="pagination-btn" @click="changeTablePage(tableCurrentPage + 1)" :disabled="tableCurrentPage === tableTotalPages">下一页</button>
+							<div style="display: flex; align-items: center; gap: 5px;">
+								<span>跳转到</span>
+								<input type="number" v-model.number="tableJumpPage" min="1" :max="tableTotalPages" style="width: 60px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 4px; text-align: center;" />
+								<button class="pagination-btn" @click="jumpTableToPage">跳转</button>
+							</div>
+						</div>
+					</div>
+				</main>
+			</div>
+
+			<div class="modal-overlay" v-if="showTableInfoModal && tableInfoItem">
+				<div class="modal detail-modal">
+					<div class="modal-header">
+						<h3 class="modal-title">餐桌明细</h3>
+					</div>
+					<div class="modal-body">
+						<div class="detail-layout">
+							<div class="detail-grid">
+								<div class="detail-item">
+									<span class="detail-label">餐桌编号</span>
+									<div class="detail-content">{{ tableInfoItem.id }}</div>
+								</div>
+								<div class="detail-item">
+									<span class="detail-label">容纳人数</span>
+									<div class="detail-content">{{ tableInfoItem.capacity }} 人</div>
+								</div>
+								<div class="detail-item">
+									<span class="detail-label">状态</span>
+									<div class="detail-content">{{ tableInfoItem.status }}</div>
+								</div>
+								<div class="detail-item">
+									<span class="detail-label">创建时间</span>
+									<div class="detail-content">{{ tableInfoItem.createTime }}</div>
+								</div>
+							</div>
+							<div class="qr-panel">
+								<span class="detail-label">餐桌二维码</span>
+								<img :src="tableQrCodeUrl" alt="餐桌二维码" class="qr-image" />
+								<div class="qr-tip">二维码内容已切换为微信小程序点餐链接，微信扫一扫可直接打开。</div>
+								<div class="qr-tip">
+									链接：
+									<a :href="tableQrPayload" target="_blank" rel="noopener noreferrer" class="qr-link">{{ tableQrPayload }}</a>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button class="btn btn-default" @click="closeTableInfo">关闭</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="modal-overlay" v-if="showDeleteModal">
+				<div class="modal">
+					<div class="modal-header">
+						<h3 class="modal-title">删除确认</h3>
+					</div>
+					<div class="modal-body">
+						<div style="text-align: center;">
+							<p style="margin-bottom: 10px;">{{ getDeleteMessage() }}</p>
+							<p class="modal-warning">{{ getDeleteWarningText() }}</p>
+							<p style="margin-top: 15px; font-size: 14px; color: #718096;">此操作不可撤销，请谨慎操作。</p>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button class="btn btn-default" @click="cancelDelete">取消</button>
+						<button class="btn btn-danger" @click="confirmDelete">确认删除</button>
+					</div>
+				</div>
+			</div>
+
+		</div>
+
+		<script>
+			const { createApp } = Vue;
+			const TABLE_API_BASE = FarmAPI.url('/api/table');
+			const STATUS_MAP = { '空闲': 1, '使用中': 2, '停用': 3 };
+			const STATUS_REVERSE = { 1: '空闲', 2: '使用中', 3: '停用' };
+
+			createApp({
+				data() {
+					return {
+						allTables: [],
+						tables: [],
+						tableCurrentPage: 1,
+						tablePageSize: 15,
+						tablePageSizeOptions: [5, 10, 15],
+						tableTotalPages: 1,
+						tableTotalTables: 0,
+						tableSelectAll: false,
+						selectedTable: null,
+						tableSearchKeyword: '',
+						tableJumpPage: 1,
+						tableStatusFilter: '',
+						tableListError: '',
+						showTableInfoModal: false,
+						tableInfoItem: null,
+						tableQrPayload: '',
+						tableQrCodeUrl: '',
+						showDeleteModal: false,
+						deleteTargetIds: []
+					};
+				},
+
+				mounted() {
+					this.loadTablesFromAPI(1);
+				},
+
+				computed: {
+					selectedTables() {
+						return this.tables.filter(table => table.selected);
+					},
+					freeTableCount() {
+						return this.allTables.filter(table => table.status === '空闲').length;
+					}
+				},
+
+				methods: {
+					navigateTo(page) {
+						window.location.href = page;
+					},
+
+					async loadTablesFromAPI(pageNum) {
+						this.tableListError = '';
+						const params = new URLSearchParams();
+						params.set('pageNum', String(pageNum || 1));
+						params.set('pageSize', String(this.tablePageSize));
+						if (this.tableSearchKeyword.trim()) {
+							params.set('keyword', this.tableSearchKeyword.trim());
+						}
+						if (this.tableStatusFilter) {
+							params.set('status', this.tableStatusFilter);
+						}
+						try {
+							const res = await fetch(TABLE_API_BASE + '/list?' + params.toString(), {
+								headers: window.Auth.getAuthHeaders()
+							});
+							const data = await FarmAPI.parseResponse(res);
+							if (data.code != null && Number(data.code) !== 200 && Number(data.code) !== 0) {
+								this.tableListError = data.message || '获取餐桌列表失败';
+								this.clearTableData();
+								return;
+							}
+							const records = (data.data && data.data.records || []).map(function(item) {
+								return {
+									id: item.tableno || item.id,
+									capacity: Number(item.capacity || 0),
+									status: item.status || '空闲',
+									createTime: item.createTime || '',
+									selected: false
+								};
+							});
+							this.allTables = records.sort(function(a, b) {
+								var numA = parseInt(String(a.id).replace(/[^\d]/g, ''), 10) || 0;
+								var numB = parseInt(String(b.id).replace(/[^\d]/g, ''), 10) || 0;
+								return numA - numB;
+							});
+							this.tableTotalTables = Number(data.data && data.data.total) || records.length;
+							this.tableTotalPages = Math.max(Number(data.data && data.data.pages) || Math.ceil(this.tableTotalTables / this.tablePageSize), 1);
+							this.tableCurrentPage = Number(data.data && data.data.pageNum) || pageNum || 1;
+							this.tableJumpPage = this.tableCurrentPage;
+							this.tableSelectAll = false;
+							this.selectedTable = null;
+							this.applyTablePagination();
+						} catch (error) {
+							console.error('获取餐桌列表失败:', error);
+							this.tableListError = '网络错误，请重试';
+							this.clearTableData();
+						}
+					},
+
+					clearTableData() {
+						this.allTables = [];
+						this.tables = [];
+						this.tableTotalTables = 0;
+						this.tableTotalPages = 1;
+						this.tableCurrentPage = 1;
+						this.tableJumpPage = 1;
+						this.tableSelectAll = false;
+						this.selectedTable = null;
+					},
+
+					applyTablePagination() {
+						this.tableTotalPages = Math.max(Math.ceil(this.tableTotalTables / this.tablePageSize), 1);
+						if (this.tableCurrentPage > this.tableTotalPages) {
+							this.tableCurrentPage = this.tableTotalPages;
+						}
+						var startIndex = (this.tableCurrentPage - 1) * this.tablePageSize;
+						this.tables = this.allTables.slice(startIndex, startIndex + this.tablePageSize).map(function(t) {
+							return Object.assign({}, t, { selected: false });
+						});
+						this.tableJumpPage = this.tableCurrentPage;
+						this.tableSelectAll = false;
+						this.selectedTable = null;
+					},
+
+					searchTables() {
+						this.tableCurrentPage = 1;
+						this.loadTablesFromAPI(1);
+					},
+
+					refreshTableData() {
+						this.tableSearchKeyword = '';
+						this.tableStatusFilter = '';
+						this.tableCurrentPage = 1;
+						this.loadTablesFromAPI(1);
+					},
+
+					changeTablePage(page) {
+						if (page >= 1 && page <= this.tableTotalPages) {
+							this.loadTablesFromAPI(page);
+						}
+					},
+
+					jumpTableToPage() {
+						if (this.tableJumpPage >= 1 && this.tableJumpPage <= this.tableTotalPages) {
+							this.loadTablesFromAPI(this.tableJumpPage);
+						} else {
+							alert('请输入有效页码');
+						}
+					},
+
+					changeTablePageSize() {
+						this.tableCurrentPage = 1;
+						this.tableJumpPage = 1;
+						this.loadTablesFromAPI(1);
+					},
+
+					toggleSelectAllTables() {
+						this.tables.forEach(function(table) {
+							table.selected = this.tableSelectAll;
+						}, this);
+						this.syncTableSelectionState();
+					},
+
+					updateSelectedTable() {
+						this.syncTableSelectionState();
+					},
+
+					syncTableSelectionState() {
+						var selected = this.tables.filter(function(t) { return t.selected; });
+						this.selectedTable = selected.length === 1 ? selected[0] : null;
+						this.tableSelectAll = this.tables.length > 0 && selected.length === this.tables.length;
+					},
+
+					addTable() {
+						window.location.href = 'table-form.html';
+					},
+
+					editTable(table) {
+						window.location.href = 'table-form.html?id=' + encodeURIComponent(table.id);
+					},
+
+					async openTableInfo(table) {
+						try {
+							var res = await fetch(TABLE_API_BASE + '/detail/' + encodeURIComponent(table.id), {
+								headers: window.Auth.getAuthHeaders()
+							});
+							var data = await FarmAPI.parseResponse(res);
+							if (data.code === 200 && data.data) {
+								var detail = data.data;
+								this.tableInfoItem = {
+									id: detail.tableno || detail.id,
+									capacity: Number(detail.capacity || 0),
+									status: STATUS_REVERSE[detail.status] || '空闲',
+									createTime: detail.createTime || ''
+								};
+								this.tableQrCodeUrl = this.buildTableQrCodeUrl(this.buildTableScanUrl(this.tableInfoItem));
+								this.tableQrPayload = this.buildTableScanUrl(this.tableInfoItem);
+								this.showTableInfoModal = true;
+								return;
+							}
+						} catch (e) {
+							console.warn('获取餐桌详情失败，使用列表数据:', e);
+						}
+						this.tableInfoItem = Object.assign({}, table);
+						this.tableQrPayload = this.buildTableScanUrl(table);
+						this.tableQrCodeUrl = this.buildTableQrCodeUrl(this.tableQrPayload);
+						this.showTableInfoModal = true;
+					},
+
+					closeTableInfo() {
+						this.showTableInfoModal = false;
+						this.tableInfoItem = null;
+						this.tableQrPayload = '';
+						this.tableQrCodeUrl = '';
+					},
+
+					openTableDeleteModal(table) {
+						var targets = table ? [table] : this.selectedTables.slice();
+						if (!targets.length) return;
+						this.deleteTargetIds = targets.map(function(t) { return t.id; });
+						this.showDeleteModal = true;
+					},
+
+					deleteTable(table) {
+						this.openTableDeleteModal(table);
+					},
+
+					getDeleteMessage() {
+						return this.deleteTargetIds.length > 1
+							? '确定要删除已选择的 ' + this.deleteTargetIds.length + ' 张餐桌吗？'
+							: '确定要删除该餐桌吗？';
+					},
+
+					getDeleteWarningText() {
+						return this.deleteTargetIds.length > 1
+							? '已选择 ' + this.deleteTargetIds.length + ' 张餐桌'
+							: (this.deleteTargetIds.length ? '此操作不可撤销，请谨慎操作' : '');
+					},
+
+					cancelDelete() {
+						this.showDeleteModal = false;
+						this.deleteTargetIds = [];
+					},
+
+					async confirmDelete() {
+						if (!this.deleteTargetIds.length) {
+							this.cancelDelete();
+							return;
+						}
+						try {
+							for (var i = 0; i < this.deleteTargetIds.length; i++) {
+								var id = this.deleteTargetIds[i];
+								var res = await fetch(TABLE_API_BASE + '/delete', {
+									method: 'POST',
+									headers: window.Auth.getAuthHeaders({ 'Content-Type': 'application/json' }),
+									body: JSON.stringify({ id: id })
+								});
+								var data = await FarmAPI.parseResponse(res);
+								if (data.code != null && Number(data.code) !== 200 && Number(data.code) !== 0) {
+									throw new Error(data.message || '删除失败');
+								}
+							}
+							this.cancelDelete();
+							await this.loadTablesFromAPI(this.tableCurrentPage);
+						} catch (error) {
+							console.error('删除餐桌失败:', error);
+							alert(error.message || '删除餐桌失败');
+							this.cancelDelete();
+						}
+					},
+
+					async updateTableStatus(table, statusText) {
+						if (!table) return;
+						var newStatus = String(statusText || '').trim();
+						if (!newStatus || table.status === newStatus) return;
+						var statusCode = STATUS_MAP[newStatus];
+						if (!statusCode) return;
+						try {
+							var res = await fetch(TABLE_API_BASE + '/status', {
+								method: 'POST',
+								headers: window.Auth.getAuthHeaders({ 'Content-Type': 'application/json' }),
+								body: JSON.stringify({ tableno: table.id, status: statusCode })
+							});
+							var data = await FarmAPI.parseResponse(res);
+							if (data.code != null && Number(data.code) !== 200 && Number(data.code) !== 0) {
+								throw new Error(data.message || '状态更新失败');
+							}
+							table.status = newStatus;
+							if (this.tableInfoItem && this.tableInfoItem.id === table.id) {
+								this.tableInfoItem.status = newStatus;
+							}
+						} catch (error) {
+							console.error('更新餐桌状态失败:', error);
+							alert(error.message || '更新餐桌状态失败');
+						}
+					},
+
+					getTableStatusClass(status) {
+						if (status === '空闲') return 'free';
+						if (status === '使用中') return 'busy';
+						return 'offline';
+					},
+
+					buildTableScanUrl(table) {
+						var secret = '^mFIT!xzJ@j55QN%R^4yZ0vx';
+						var appid = 'wx986e22f241e13ba2';
+						var path = 'subpkg/order/order';
+						var tableId = table && table.id ? table.id : '';
+						var query = 'tableId=' + tableId + '&secret=' + encodeURIComponent(secret);
+						return 'weixin://dl/business/?appid=' + appid + '&path=' + path + '&query=' + query;
+					},
+
+					buildTableQrPayload(table) {
+						return this.buildTableScanUrl(table);
+					},
+
+					buildTableQrCodeUrl(payload) {
+						return FarmAPI.qrDataURL(payload, { cellSize: 6, margin: 2 });
+					}
+				,
+
+				logout() {
+					if (confirm('确定要退出登录吗？')) {
+						if (window.Auth && typeof window.Auth.clearAuth === 'function') {
+							window.Auth.clearAuth();
+						} else {
+							localStorage.removeItem('token');
+							localStorage.removeItem('userInfo');
+						}
+						window.location.href = 'login.html';
+					}
+				}
+}
+			}).mount('#app');
+		</script>
+	</body>
+</html>
